@@ -1,0 +1,41 @@
+Title: Melanoma (DermNet NZ)
+
+Source: DermNet NZ – “Melanoma”  
+Link: https://dermnetnz.org/topics/melanoma
+
+What is Melanoma?
+- Melanoma is a malignant tumour of melanocytes, cells that produce pigment (melanin).
+- Less common than other skin cancers, but more dangerous because of higher tendency to spread (metastasize).
+
+Epidemiology:
+- Melanoma incidence is rising globally in light-skinned populations.  
+- Risk increases with age, but can occur in young adults.  
+- Important risk factors: intense intermittent UV exposure (sunburns), family history, many moles / atypical nevi, fair skin, freckling, low ability to tan.
+
+Clinical Features:
+- Typical signs: asymmetry, border irregularity, colour variation, diameter (>6mm), evolution (change over time) — the ABCDE criteria.
+- Variation in presentation: can be flat or raised; may ulcerate; may present in atypical locations (palms, soles, mucosal surfaces).
+- Dermatoscopic features: irregular pigment network, variegated colours, dots/globules, regression, blue-white veil.
+
+Diagnosis:
+- Biopsy is required for histopathological confirmation.  
+- Types include superficial spreading, nodular, lentigo maligna, acral-lentiginous melanoma.  
+- Breslow thickness, ulceration, mitotic rate are key prognostic factors.
+
+Staging & Prognosis:
+- Early detection (thin lesions) has very good prognosis; survival drops with depth, ulceration, and metastasis.  
+- Treatment options depend on stage.
+
+Treatment:
+- Surgical excision with adequate margins is the main treatment for localized melanoma.  
+- For advanced/metastatic melanoma: targeted therapies (if mutations like BRAF), immunotherapy (IL-2, checkpoint inhibitors), sometimes radiation or chemotherapy.
+
+Prevention:
+- Sun protection: sunscreen, protective clothing, avoiding sunburn.  
+- Self-skin checks, monitoring moles for change.  
+- Public awareness campaigns.
+
+Important Notes / Special Types:
+- Acral and mucosal melanomas are more common in non-white skin and have worse prognosis.  
+- Melanoma risk also influenced by genetics and UV exposure history.
+

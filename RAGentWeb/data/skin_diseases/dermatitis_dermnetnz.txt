@@ -1,0 +1,51 @@
+Title: Dermatitis (DermNet NZ)
+
+Source: DermNet NZ – “Dermatitis: Types and Treatments”  
+Link: https://dermnetnz.org/topics/dermatitis
+
+What is Dermatitis?
+- Dermatitis refers to a group of itchy inflammatory skin conditions characterised by epidermal changes.
+- It may be classified by cause (e.g. allergic contact, irritant, photosensitive), by appearance (discoid, hyperkeratotic, pompholyx), or by site (hand, eyelid, lower leg).
+- The terms “dermatitis” and “eczema” are often used interchangeably. All eczema is dermatitis, but not all dermatitis is eczema.
+
+Who gets Dermatitis?
+- Very common: about 1 in 5 persons will have dermatitis at some stage of life.
+- Atopic dermatitis and pityriasis alba are more common in children.
+- Hand eczema is more frequent in young and middle-aged adults.
+- Venous or gravitational eczema, asteatotic dermatitis, and nummular eczema appear more often in middle and older age groups.
+
+Clinical Features:
+- In acute cases: redness/swelling, papulation, vesiculation, oozing/weeping, blistering.
+- Subacute: features of both acute and chronic.
+- Chronic: thickening of skin; accentuation of skin creases; hyperkeratosis; scaling; fissuring; excoriation; hyper-/hypopigmentation.
+
+Types of Dermatitis:
+- Exogenous (external causes) examples:  
+  * Allergic contact dermatitis (e.g., nickel, hair dye, perfume)  
+  * Irritant contact dermatitis (soaps, detergents, chemicals)  
+  * Photosensitive dermatitis (light/UV)  
+  * Drug-induced, trauma-related, infections contributing
+- Endogenous causes include:  
+  * Atopic dermatitis (associated with family history of asthma/hay fever)  
+  * Seborrhoeic dermatitis (face, scalp, ears, flexures)  
+  * Nummular/discoid eczema  
+  * Pityriasis alba  
+  * Others: hand dermatitis, eyelid dermatitis, asteatotic dermatitis, metabolic, juvenile plantar dermatitis, etc.
+
+Differential Diagnosis:
+- Fungal infections, bacterial infections, rosacea, blistering diseases, skin tumors, lupus erythematosus, etc.
+
+Investigation:
+- History and examination often enough  
+- Skin swabs/scrapings (if secondary infection suspected)  
+- Patch testing for allergens  
+- Blood tests (e.g. IgE), sometimes skin biopsy
+
+Treatment:
+- Identify & avoid irritants and allergens  
+- Use emollients regularly (after washing, when skin feels dry)  
+- Topical therapies: anti-inflammatory creams/steroids; mild potent steroids used short term, tapering / reducing frequency  
+- Non-steroid options: calcineurin inhibitors, newer small molecules (JAK-inhibitors) for certain cases
+- Physical therapy: UV therapies (e.g. UVB, PUVA) in resistant cases  
+- Systemic therapy for severe chronic cases: immunosuppressive drugs (methotrexate, azathioprine, ciclosporin); biologics (dupilumab etc.)
+

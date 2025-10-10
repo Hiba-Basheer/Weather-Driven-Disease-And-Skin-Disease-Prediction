@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RAG Chatbot</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    #chat-container {
+      width: 100%;
+      max-width: 700px;
+      background-color: #1f1f1f;
+      border-radius: 10px;
+      padding: 20px;
+      overflow-y: auto;
+      height: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background-color: #0a84ff;
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .bot {
+      background-color: #2e8b57;
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    #input-area {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    #unifiedImageInput {
+      width: 120px;
+      padding: 6px;
+      background-color: #2a2a2a;
+      color: white;
+      border-radius: 5px;
+      border: none;
+    }
+
+    #unifiedInput {
+      flex: 1;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+      background-color: #2a2a2a;
+      color: white;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #0a84ff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0066cc;
+    }
+
+    img.chat-image {
+      max-width: 300px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>RAGent</h1>
+  <div id="chat-container"></div>
+
+  <div id="input-area">
+    <div class="input-row">
+      <input type="file" id="unifiedImageInput" accept="image/*" />
+      <input type="text" id="unifiedInput" placeholder="Type your message..." />
+      <button onclick="sendUnifiedMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendUnifiedMessage() {
+      const textInput = document.getElementById("unifiedInput");
+      const imageInput = document.getElementById("unifiedImageInput");
+      const chat = document.getElementById("chat-container");
+
+      const text = textInput.value.trim();
+      const hasImage = imageInput.files.length > 0;
+
+      if (!text && !hasImage) return;
+
+      const formData = new FormData();
+      if (text) formData.append("note", text);
+      if (hasImage) formData.append("file", imageInput.files[0]);
+
+      const userMsg = document.createElement("div");
+      userMsg.className = "message user";
+      if (text) userMsg.appendChild(document.createTextNode(text));
+      if (hasImage) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(imageInput.files[0]);
+        img.className = "chat-image";
+        userMsg.appendChild(img);
+      }
+      chat.appendChild(userMsg);
+      chat.scrollTop = chat.scrollHeight;
+
+      const endpoint = hasImage ? "/upload-image-with-note/" : "/chat/";
+      const payload = hasImage ? formData : JSON.stringify({ query: text });
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        body: payload,
+        headers: hasImage ? undefined : { "Content-Type": "application/json" }
+      });
+
+      const data = await res.json();
+      const botMsg = document.createElement("div");
+      botMsg.className = "message bot";
+      botMsg.textContent = data.response;
+      chat.appendChild(botMsg);
+      chat.scrollTop = chat.scrollHeight;
+
+      textInput.value = "";
+      imageInput.value = "";
+    }
+  </script>
+</body>
+</html>

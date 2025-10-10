@@ -1,0 +1,48 @@
+Title: Headache Disorders (WHO Fact Sheet)
+
+Source: WHO – Headache Disorders  
+Link: https://www.who.int/news-room/fact-sheets/detail/headache-disorders
+
+Key Facts:
+- Headache disorders are among the most common disorders of the nervous system.  
+- Globally, almost 3 billion people are living with migraine or tension-type headache.  
+- Migraine is ranked as the second leading cause of years lived with disability (YLDs).  
+- Tension-type headache is the most prevalent headache disorder.
+
+Types & Overview:
+- Major types include migraine, tension-type headache, cluster headache, and medication-overuse headache.  
+- Migraine involves recurrent attacks, often moderate to severe, frequently throbbing pain, usually unilateral, worsened by physical activity or sensory stimuli.  
+- Tension-type headache typically causes bilateral, pressing/tightening pain, mild-to-moderate intensity, not aggravated by physical activity.  
+- Medication-overuse headache arises from frequent use of acute headache medication.
+
+Symptoms:
+- throbbing or pulsating pain, typically on one side (migraine); or steady, pressing/tightening (tension-type).  
+- Nausea, vomiting, sensitivity to light (photophobia), sound (phonophobia) seen in migraine.  
+- Headache attacks often last 4–72 hours (for migraine).  
+- Frequency varies: tension-type headaches may occur many times per month or even daily.
+
+Impact / Burden:
+- Significant disability worldwide; impacts work, school, family life.  
+- Often underdiagnosed and undertreated, especially in low- and middle-income countries.  
+- Causes economic losses both at individual and societal levels due to absenteeism and decreased productivity.
+
+Risk Factors & Triggers:
+- Genetic predisposition (especially for migraine).  
+- Environmental triggers: stress, sleep deprivation, irregular meals, dehydration, light, noise.  
+- Hormonal changes (in females), certain foods/drinks, weather changes, sensory stimuli.  
+- Overuse of headache medications.
+
+Diagnosis & Management:
+- Based on history (frequency, features, triggers) and symptom description; diagnostic criteria for migraine and tension-type headache exist (e.g., ICHD classification).  
+- Non-pharmacological management: lifestyle modification (sleep, diet, hydration, stress management).  
+- Pharmacological treatments:
+  - Acute treatments: analgesics, NSAIDs, triptans (for migraine).
+  - Preventive/prophylactic treatments for frequent migraines (beta-blockers, certain antidepressants, antiepileptics, etc.).  
+- Treatment of medication-overuse headache involves withdrawal of overused medications, counseling, patient education.
+
+Prevention & Education:
+- Raise awareness of triggers & early warning symptoms.  
+- Promote healthy lifestyle: regular sleep schedule, balanced diet, hydration, stress control.  
+- Limit use of acute pain medications; avoid medication overuse.  
+- Improve access to healthcare, diagnostic services, and evidence-based treatments.
+

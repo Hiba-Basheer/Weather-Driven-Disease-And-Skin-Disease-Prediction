@@ -1,0 +1,44 @@
+Title: Weather- and Climate-Related Diseases — Risks & Precautions
+
+Overview:
+Climate change and weather variability influence human health in many ways. Extreme heat, floods, droughts, changing rainfall patterns, and shifting ecosystems can cause or worsen diseases. WHO states that rising temperatures, altered precipitation, and extreme events threaten health worldwide. :contentReference[oaicite:0]{index=0}
+
+Key Weather-Related Disease Categories:
+
+1. Heat-Related Illnesses  
+   - Heat exhaustion: fatigue, dizziness, nausea, weakness, heavy sweating. :contentReference[oaicite:1]{index=1}  
+   - Heat stroke: a medical emergency with high core temperature, confusion, loss of consciousness.  
+   - Precautions: stay hydrated, avoid strenuous activity during peak heat, seek shade or cool environments, wear light clothing, monitor vulnerable persons (elderly, children, chronic illness).
+
+2. Vector-borne Diseases (mosquito, tick, etc.)  
+   - Diseases like dengue, malaria, Zika, chikungunya, West Nile virus become more common as warmer, wetter conditions expand vector habitats. :contentReference[oaicite:2]{index=2}  
+   - Precautions: remove standing water, use mosquito nets/repellents, wear protective clothing, use insecticides where appropriate, community vector control.
+
+3. Waterborne & Flood-associated Diseases  
+   - After floods or heavy rains: cholera, leptospirosis, diarrheal illnesses, skin infections. :contentReference[oaicite:3]{index=3}  
+   - Precautions: ensure safe drinking water, boil or filter water, avoid contact with contaminated floodwater, sanitation, hygiene (handwashing).
+
+4. Respiratory & Air Quality Conditions  
+   - Wildfires, dust storms, pollution exacerbate asthma, chronic obstructive pulmonary disease (COPD), other lung diseases. :contentReference[oaicite:4]{index=4}  
+   - Precautions: monitor air quality indices, limit outdoor activity when pollution or smoke is high, use masks or air purifiers, indoor air filtration.
+
+5. Infectious Disease Spread Changes  
+   - Climate shifts can expand geographic ranges of disease vectors and reservoirs, increasing pathogen transmission. :contentReference[oaicite:5]{index=5}  
+   - Precautions: surveillance, early warning systems, vaccination (where available), public health preparedness.
+
+6. Mortality & Noncommunicable Disease Impacts  
+   - Heat waves and cold spells increase mortality, especially among older adults and those with cardiovascular or respiratory disease. :contentReference[oaicite:6]{index=6}  
+   - Precautions: heatwave early warning systems, cooling centers, public health advisories, healthcare system readiness.
+
+General Precautions & Strategies:
+
+- Develop and use early warning systems for extreme events.  
+- Strengthen surveillance of climate-sensitive diseases and integrate climate data in health decision making. :contentReference[oaicite:7]{index=7}  
+- Improve access to safe water, sanitation, and hygiene.  
+- Promote resilient health systems (capacity to respond to climate stressors).  
+- Public awareness campaigns: inform people about heat safety, vector control, hygiene, and environmental risks.  
+- Promote sustainable policies to mitigate emissions and slow climate change.
+
+Vulnerable Groups:
+
+People in low-income and disadvantaged communities, elderly, children, those with preexisting conditions, migrants/displaced populations, and outdoor workers are most at risk. :contentReference[oaicite:8]{index=8}

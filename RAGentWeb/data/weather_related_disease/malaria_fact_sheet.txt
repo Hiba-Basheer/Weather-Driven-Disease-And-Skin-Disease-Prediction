@@ -1,0 +1,47 @@
+Title: Malaria (WHO Fact Sheet)
+
+Source: WHO – https://www.who.int/news-room/fact-sheets/detail/malaria
+
+Key Facts:
+- In 2023, there were about 263 million malaria cases globally and 597,000 malaria deaths in 83 countries.
+- The WHO African Region carries a disproportionately high share of malaria burden: ~94% of cases and ~95% of deaths.
+- Approximately 76% of all malaria deaths occur in children under 5 years.
+
+Overview:
+- Malaria is a life-threatening disease caused by parasites that enters humans through mosquito bites.
+- Most infections cause mild symptoms (fever, chills, headache), but untreated malaria can lead to severe illness and death.
+- There are 5 Plasmodium species that cause malaria in humans; P. falciparum and P. vivax are the most significant.
+
+Symptoms:
+- Fever, chills, headache.
+- Nausea, vomiting.
+- Body aches, malaise.
+- Severe symptoms: fatigue, seizures, difficulty breathing, confusion, dark or bloody urine, jaundice, abnormal bleeding.
+
+Disease Burden:
+- High incidence in tropical climates, especially sub-Saharan Africa.
+- Children under 5 and pregnant women are at higher risk.
+- Malaria during pregnancy can cause low birth weight and premature delivery.
+
+Transmission:
+- Transmission occurs via bites of infected female Anopheles mosquitoes.
+- Other transmission: blood transfusion, contaminated needles.
+- Incubation usually 10–15 days after the bite.
+
+Diagnosis and Treatment:
+- Diagnosis depends on laboratory tests: microscopy or rapid diagnostic tests (RDTs).
+- Treatment typically uses antimalarial medicines; specifics depend on species and resistance.
+- In many areas, artemisinin-based combination therapies are first-line for P. falciparum.
+- Drugs such as chloroquine or primaquine may be used depending on species and resistance.
+
+Prevention and Control:
+- Use of insecticide-treated nets (ITNs) and indoor residual spraying (IRS).
+- Wearing protective clothing; use insect repellents; window screens.
+- Preventive chemotherapies in vulnerable populations.
+- Vaccines: approval of RTS,S/AS01 vaccine and rollout in high-transmission zones.
+
+Risk Factors:
+- Young children, pregnant women, travelers, immunocompromised individuals.
+- Poor mosquito control, resistance to medicines/insecticides.
+- Environmental factors like rainfall, temperature, urbanization.
+

@@ -1,0 +1,44 @@
+Title: Seasonal Influenza (WHO Fact Sheet)
+
+Source: WHO – Influenza (Seasonal)  
+Link: https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)
+
+Key Facts:
+- There are around a billion cases of seasonal influenza annually, including 3–5 million cases of severe illness. :contentReference[oaicite:0]{index=0}  
+- It causes 290,000 to 650,000 respiratory deaths annually. :contentReference[oaicite:1]{index=1}  
+- 99% of deaths in children under 5 years of age with influenza-related lower respiratory tract infections are in developing countries. :contentReference[oaicite:2]{index=2}  
+- Symptoms begin 1-4 days after infection and usually last around a week. :contentReference[oaicite:3]{index=3}  
+
+Overview:
+- Seasonal influenza (the flu) is an acute respiratory infection caused by influenza viruses. Most people recover without special treatment. :contentReference[oaicite:4]{index=4}  
+- Influenza spreads easily between people when they cough or sneeze. Vaccination is the best way to prevent the disease. :contentReference[oaicite:5]{index=5}  
+- There are 4 types of influenza viruses (A, B, C, D). Types A and B are what usually cause seasonal epidemics. Influenza A has subtypes (e.g. H1N1, H3N2), which are important in vaccine formulation. :contentReference[oaicite:6]{index=6}  
+
+Signs and Symptoms:
+- Sudden onset of fever  
+- Cough (usually dry)  
+- Headache  
+- Muscle and joint pain  
+- Severe malaise (feeling very unwell)  
+- Sore throat  
+- Runny nose :contentReference[oaicite:7]{index=7}  
+
+At-risk & Severe Cases:
+- Severe cases especially among people who are pregnant, children under 5, older adults (65+), people with chronic medical conditions, people with immunosuppression. :contentReference[oaicite:8]{index=8}  
+- Influenza can worsen symptoms of underlying chronic diseases. :contentReference[oaicite:9]{index=9}  
+
+Diagnosis:
+- Usually clinically diagnosed; but lab testing is needed to confirm during low activity or to distinguish from other respiratory infections. :contentReference[oaicite:10]{index=10}  
+- Tests include: antigen detection, virus isolation, detection of influenza RNA by RT-PCR. Rapid diagnostic tests are also used though less sensitive. :contentReference[oaicite:11]{index=11}  
+
+Treatment:
+- Most people recover on their own with rest, fluids, and symptom relief. :contentReference[oaicite:12]{index=12}  
+- Antiviral medications for people at high risk or with severe symptoms. :contentReference[oaicite:13]{index=13}  
+
+Prevention:
+- Vaccination is primary preventive measure; often updated to match circulating strains. :contentReference[oaicite:14]{index=14}  
+- Hand hygiene; cover mouth when coughing/sneezing; stay home when unwell; protect high-risk groups. :contentReference[oaicite:15]{index=15}  
+
+WHO Response & Surveillance:
+- WHO’s Global Influenza Surveillance and Response System (GISRS) monitors influenza viruses globally; helps decide vaccine compositions. :contentReference[oaicite:16]{index=16}  
+- Includes diagnostics, antiviral susceptibility monitoring, outbreak response, and research into vaccine effectiveness. :contentReference[oaicite:17]{index=17}  
