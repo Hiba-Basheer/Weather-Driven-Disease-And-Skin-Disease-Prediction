@@ -130,5 +130,5 @@ RAG_chatbot/data/**/*.txt
 
 
 # Ignore DL module artifacts
-DL/artifacts
-DL/mlflow_artifacts
+DL/artifacts/
+DL/mlflow_artifacts/

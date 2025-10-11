@@ -22,22 +22,19 @@
     <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-5xl">
         <header class="text-center py-6 bg-white shadow-lg rounded-xl mb-8">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">RAGent</h1>
-            <p class="mt-2 text-md text-gray-500">ML, DL, Image Classification, RAG Chatbot & Power BI Dashboard in one platform.</p>
+            <p class="mt-2 text-md text-gray-500">ML, DL, Image Classification, RAG Chatbot & Tableau Dashboard in one platform.</p>
         </header>
 
-        <!-- Tabs -->
         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 border-b border-gray-200 mb-6 bg-black p-4 rounded-xl shadow">
             <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150 active" data-tab="ml">ML Prediction</button>
             <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150" data-tab="dl">DL Prediction</button>
             <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150" data-tab="image">Image Classification</button>
             <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150" data-tab="rag">RAG Chatbot</button>
-            <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150" data-tab="dashboard">Dashboard</button>
+            <button class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-150" data-tab="dashboard">Tableau Dashboard</button>
         </div>
 
-        <!-- Tab Contents -->
         <div class="space-y-6">
 
-            <!-- ML Prediction Form -->
             <div id="ml" class="tab-content active bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">ML Prediction (Structured Data)</h2>
                 <form id="ml-form">
@@ -72,14 +69,13 @@
                 </form>
             </div>
 
-            <!-- DL Prediction Form -->
             <div id="dl" class="tab-content bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-500">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">DL Prediction (Unstructured Data)</h2>
                 <form id="dl-form">
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Describe your condition (Include age & city):</label>
                         <textarea id="dl-note" name="note" rows="4" placeholder="e.g., I am 30 years old living in Kochi. I am feeling severe headache."
-                                  class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
+                                 class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
                     </div>
                     <button type="submit" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150">
                         Predict DL Disease Risk
@@ -91,7 +87,6 @@
                 </form>
             </div>
 
-            <!-- Image Classification -->
             <div id="image" class="tab-content bg-white p-6 rounded-xl shadow-lg border-t-4 border-purple-500">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">Skin Disease Image Classification</h2>
                 <form id="image-form">
@@ -110,7 +105,6 @@
                 </form>
             </div>
 
-            <!-- RAG Chatbot -->
             <div id="rag" class="tab-content bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-500">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-700">RAG Chatbot (Disease Knowledge)</h2>
                 <div id="chat-window" class="h-80 overflow-y-auto p-4 mb-4 border border-gray-200 rounded-lg bg-gray-50 flex flex-col space-y-3">
@@ -127,21 +121,48 @@
                 </form>
             </div>
 
-            <!-- Power BI Dashboard -->
             <div id="dashboard" class="tab-content bg-white p-6 rounded-xl shadow-lg border-t-4 border-yellow-500">
-                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Power BI Dashboard</h2>
-                <p class="text-gray-600 mb-4">Below is your integrated Power BI dashboard displaying real-time analytics:</p>
-                <div class="aspect-w-16 aspect-h-9 rounded-xl overflow-hidden shadow-lg">
-                    <iframe title="Power BI Dashboard" width="100%" height="600"
-                        src="https://app.powerbi.com/groups/me/reports/59da4c91-2637-4aea-bf13-ce025ff19e28/7dc98903ec04005406a4?experience=power-bi"
-                        frameborder="0" allowFullScreen="true"></iframe>
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Tableau Dashboard</h2>
+                <p class="text-gray-600 mb-4">Below is your integrated Tableau Public dashboard displaying weather and disease analysis:</p>
+                
+                <div class='tableauPlaceholder' id='viz1701548651811' style='position: relative; width: 100%; height: 700px;'>
+                    <noscript>
+                        <a href='#'>
+                            <img alt='Dashboard 1 ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;We&#47;Weather_Disease_Prediction&#47;Dashboard1&#47;1_rss.png' style='border: none' />
+                        </a>
+                    </noscript>
+                    <object class='tableauViz' style='display:none;'>
+                        <param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' />
+                        <param name='embed_code_version' value='3' />
+                        <param name='site_root' value='' />
+                        <param name='name' value='Weather_Disease_Prediction&#47;Dashboard1' />
+                        <param name='tabs' value='no' />
+                        <param name='toolbar' value='yes' />
+                        <param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;We&#47;Weather_Disease_Prediction&#47;Dashboard1&#47;1.png' />
+                        <param name='animate_transition' value='yes' />
+                        <param name='display_static_image' value='yes' />
+                        <param name='display_spinner' value='yes' />
+                        <param name='display_overlay' value='yes' />
+                        <param name='display_count' value='yes' />
+                        <param name='language' value='en-US' />
+                        <param name='filter' value='publish=yes' />
+                    </object>
                 </div>
-            </div>
+                <script type='text/javascript'>
+                    var divElement = document.getElementById('viz1701548651811');
+                    var vizElement = divElement.getElementsByTagName('object')[0];
+                    // Adjusted height for better viewing within a responsive container
+                    vizElement.style.width='100%';
+                    vizElement.style.height='700px'; 
+                    
+                    var scriptElement = document.createElement('script');
+                    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';
+                    vizElement.parentNode.insertBefore(scriptElement, vizElement);
+                </script>
+                </div>
         </div>
 
-        <!-- Output -->
-        
-    </div>
+        </div>
 
     <script src="/static/scripts.js"></script>
 </body>
