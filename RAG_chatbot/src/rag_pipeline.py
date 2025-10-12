@@ -133,7 +133,7 @@ def handle_ml_input(user_input: str):
     Handle user input for ML-based prediction.
 
     Args:
-        user_input (str): Structured input containing features like age, gender, symptoms.
+        user_input (str): Structured input containing features like age, gender, symptoms, city.
 
     Returns:
         str: Prediction result with explanation or error message.
@@ -272,7 +272,7 @@ def save_user_data(module: str, user_input: str, response: str, weather: dict = 
         module (str): Module name (ml, dl, skin_image, etc.).
         user_input (str): User input text.
         response (str): Chatbot response.
-        weather (dict, optional): Weather information dictionary.
+        weather (dict): Weather information dictionary.
     """
     try:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -293,7 +293,7 @@ def save_user_data(module: str, user_input: str, response: str, weather: dict = 
             "wind_speed": weather.get("wind_speed") if weather else ""
         }
         
-                # Generate hash for current record
+        # Generate hash for current record
         record_hash = generate_record_hash(record)
 
         # Check for existing hashes

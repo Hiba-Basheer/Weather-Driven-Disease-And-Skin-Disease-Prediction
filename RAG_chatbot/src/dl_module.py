@@ -6,7 +6,7 @@ import os
 import logging
 import tensorflow as tf
 from src.preprocess import preprocess_dl_text
-from src.constants import LABEL_MAP  # Shared label mapping for DL and ML
+from src.constants import LABEL_MAP  
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

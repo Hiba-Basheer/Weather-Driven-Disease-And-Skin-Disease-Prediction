@@ -36,7 +36,7 @@ def preprocess_data(data):
 
     Returns:
         pd.DataFrame: Preprocessed data.
-        LabelEncoder: Fitted label encoder (for decoding later).
+        LabelEncoder: Fitted label encoder.
     """
     logger.info("Starting preprocessing...")
 

@@ -23,7 +23,7 @@ def predict_image(img_path, model_path=r"D:\brototype\week27\CV\resnet_model.h5"
         model_path (str): Path to the trained model.
 
     Returns:
-        tuple: (predicted_class_name, confidence_score, caution_message)
+        tuple: (predicted_class_name, confidence_score)
     """
     # Load model
     model = tf.keras.models.load_model(model_path)

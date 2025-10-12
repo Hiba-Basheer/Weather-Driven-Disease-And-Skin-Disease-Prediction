@@ -1,145 +1,114 @@
 import os
 import joblib
-import numpy as np
 import logging
-import json
 import pandas as pd
-from .weather_fetcher import fetch_and_log_weather_data 
+import numpy as np
+from .weather_fetcher import fetch_and_log_weather_data
 
 logger = logging.getLogger("MLService")
 
-DISEASE_LABELS = [
-    "Heart Attack",
-    "Influenza",
-    "Dengue",
-    "Sinusitis",
-    "Eczema",
-    "Common Cold",
-    "Heat Stroke",
-    "Migraine",
-    "Malaria"
-]
-
 class MLService:
     """
-    Service class for Machine Learning (ML) prediction.
-    Loads a pre-trained scikit-learn model and uses structured user data
-    along with real-time weather data for prediction.
+    Service class for ML predictions using trained model + live weather.
     """
-    FEATURE_NAMES_FILE = "feature_names.json" 
 
-    def __init__(self, model_path: str, api_key: str):
-        """
-        Initializes the MLService by loading the model, feature names, and API key.
-        """
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"ML model not found at: {model_path}")
-        
-        # Determine the directory where the model file resides
-        model_dir = os.path.dirname(model_path)
-        feature_names_path = os.path.join(model_dir, self.FEATURE_NAMES_FILE)
+    FEATURE_NAMES_FILE = "ml_expected_columns.pkl"
+    LABEL_ENCODER_FILE = "label_encoder.pkl"
+    MODEL_FILE = "trained_model.pkl"
 
-        if not os.path.exists(feature_names_path):
-             logger.warning(f"Feature names file NOT FOUND at: {feature_names_path}. Prediction will likely fail.")
-             self.expected_features = None 
-        else:
-             with open(feature_names_path, 'r') as f:
-                 self.expected_features = json.load(f)
-             logger.info(f"Loaded {len(self.expected_features)} feature names for ML prediction.")
-        
-        self.model = joblib.load(model_path)
+    def __init__(self, model_dir: str = None, api_key: str = None):
+        """
+        Initializes MLService.
+
+        model_dir: path to folder containing trained_model.pkl, label_encoder.pkl, ml_expected_columns.pkl
+        api_key: OpenWeatherMap API key
+        """
+        if model_dir is None:
+            model_dir = os.path.join(os.path.dirname(__file__), "..", "models", "ml")
+        self.model_dir = model_dir
         self.api_key = api_key
-        self.weather_features = ['temp', 'humidity', 'wind_speed'] 
-        logger.info(f"ML Model loaded from {model_path}")
 
-    async def predict(self, age: int, gender: str, city: str, symptoms: str) -> dict:
+        # Load model
+        model_path = os.path.join(model_dir, self.MODEL_FILE)
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model not found at {model_path}")
+        self.model = joblib.load(model_path)
+
+        # Load label encoder
+        label_path = os.path.join(model_dir, self.LABEL_ENCODER_FILE)
+        if not os.path.exists(label_path):
+            raise FileNotFoundError(f"Label encoder not found at {label_path}")
+        self.label_encoder = joblib.load(label_path)
+
+        # Load expected features
+        features_path = os.path.join(model_dir, self.FEATURE_NAMES_FILE)
+        if not os.path.exists(features_path):
+            raise FileNotFoundError(f"Expected features file not found at {features_path}")
+        self.expected_features = joblib.load(features_path)
+
+        logger.info(f"Model, encoder, and expected features loaded successfully from {model_dir}")
+
+    async def predict(self, user_input: dict) -> dict:
         """
-        Fetches current weather data for the city and performs a prediction using structured inputs.
-        
-        Args:
-            age: Age of the person.
-            gender: Gender of the person (Male/Female).
-            city: City name for weather data.
-            symptoms: Additional symptoms (free text).
+        Predict disease using structured input + live weather.
 
-        Returns:
-            A dictionary containing the prediction result (disease name), confidence, weather data, and user info.
+        user_input should contain: {"age": int, "gender": str, "city": str, "symptoms": str}
         """
-        
-        # 1. Fetch Weather Data 
-        weather_data = await fetch_and_log_weather_data(city, self.api_key, symptoms, service_type='ML')
-
-        if 'error' in weather_data:
-            return {
-                "error": weather_data['error'],
-                "prediction": "N/A",
-                "status": "Failed to retrieve weather data."
-            }
-
-        # 2. Combine and Align Features 
         try:
-            # Prepare the raw input dictionary for DataFrame creation
-            raw_input = {
-                'age': age,
-                'gender': gender.lower(), 
-                'city': city.lower(),
-                'symptoms': symptoms.lower()
-            }
-            
-            # Add weather features
-            for name in self.weather_features:
-                 raw_input[name] = weather_data.get(name, 0)
+            city = user_input.get("city")
+            if self.api_key is None:
+                raise ValueError("OpenWeatherMap API key not set for weather fetching.")
+
+            # Fetch live weather
+            weather_data = await fetch_and_log_weather_data(city, self.api_key, user_input.get("symptoms"), service_type="ML")
+            if 'error' in weather_data:
+                return {
+                    "error": weather_data['error'],
+                    "prediction": "N/A",
+                    "status": "Failed to retrieve weather data."
+                }
+
+            # Prepare feature dictionary
+            features_dict = {col: 0 for col in self.expected_features}
+
+            # Fill numeric/weather features
+            features_dict["Age"] = user_input.get("age", 0)
+            features_dict["Temperature (C)"] = weather_data.get("temp", 30)
+            features_dict["Humidity"] = weather_data.get("humidity", 70)
+            features_dict["Wind Speed (km/h)"] = weather_data.get("wind_speed", 5)
+
+            # Map user symptoms to feature columns
+            user_symptoms = [s.strip().lower() for s in user_input.get("symptoms", "").split(",")]
+            for symptom in user_symptoms:
+                if symptom in features_dict:
+                    features_dict[symptom] = 1
+
+            # Gender as numeric/categorical if exists in expected_features
+            gender = user_input.get("gender", "").lower()
+            if "gender" in self.expected_features:
+                features_dict["gender"] = 1 if gender == "male" else 0
 
             # Create DataFrame
-            input_df = pd.DataFrame([raw_input])
+            df_final = pd.DataFrame([features_dict])
 
-            # Apply One-Hot Encoding (OHE) for categorical variables
-            categorical_cols = ['gender', 'city', 'symptoms']
-            processed_df = pd.get_dummies(input_df, columns=categorical_cols, prefix=categorical_cols)
+            # Predict
+            X_input = df_final.values
+            pred_proba = self.model.predict_proba(X_input)[0]
+            pred_class_index = np.argmax(pred_proba)
+            predicted_label = self.label_encoder.inverse_transform([pred_class_index])[0]
 
-            # 3. Align the DataFrame columns with the expected features
-            if self.expected_features is None:
-                raise ValueError("Expected feature names list is missing. Cannot align input data.")
-
-            # Reindex to ensure all 53 features are present, filling missing (not-present symptoms/cities) with 0
-            final_input_df = processed_df.reindex(columns=self.expected_features, fill_value=0)
-            
-            # Check if feature count is correct before prediction
-            if final_input_df.shape[1] != len(self.expected_features):
-                raise ValueError(
-                    f"Feature count mismatch after processing. Expected {len(self.expected_features)} features, but got {final_input_df.shape[1]}. "
-                )
-
-            # Convert to numpy array for prediction
-            input_data = final_input_df.values
-            
-            # 4. Perform Prediction
-            prediction_proba = self.model.predict_proba(input_data)[0]
-            predicted_class_index = self.model.classes_[np.argmax(prediction_proba)]
-            
-            if predicted_class_index < len(DISEASE_LABELS):
-                predicted_label = DISEASE_LABELS[predicted_class_index]
-            else:
-                predicted_label = f"Unknown Class {predicted_class_index}"
-            
-            # 5. Format Results
             return {
-                "prediction": predicted_label, # Returns the disease name
-                "confidence": float(np.max(prediction_proba)),
+                "prediction": predicted_label,
+                "confidence": float(np.max(pred_proba)),
                 "raw_weather_data": {k: float(v) for k, v in weather_data.items() if isinstance(v, (int, float))},
                 "status": "Success",
-                "user_info": {
-                    "age": age,
-                    "gender": gender,
-                    "symptoms": symptoms,
-                    "city": city
-                }
+                "user_info": user_input
             }
 
         except Exception as e:
-            logger.error(f"ML prediction error for city {city}: {e}")
+            logger.error(f"ML prediction error: {e}")
             return {
-                "error": f"Internal prediction processing error: {e}",
+                "error": str(e),
                 "prediction": "N/A",
                 "status": "Error"
             }

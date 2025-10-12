@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 from dotenv import load_dotenv
 import os
 
-load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))  # Ensures correct path
+load_dotenv(dotenv_path=os.path.join(os.getcwd(), ".env"))  
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-print("Loaded API key:", API_KEY)  # Add this here
+print("Loaded API key:", API_KEY)  
 
 # Logging setup
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -80,7 +80,7 @@ def fetch_weather(city: str) -> dict:
         logging.error(f"Failed to fetch weather for {city}: {e}")
         return {}
 
-# Optional: standalone test
+# test
 if __name__ == "__main__":
     test_city = "Kochi"
     weather = fetch_weather(test_city)

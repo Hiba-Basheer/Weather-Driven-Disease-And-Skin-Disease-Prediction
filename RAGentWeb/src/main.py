@@ -8,10 +8,16 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from pathlib import Path 
 
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RAGentWeb_API")
 
+load_dotenv()  
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+if not OPENWEATHER_API_KEY:
+    logger.error("OpenWeatherMap API key not found in environment variables!")
+    
 # Use pathlib for BASE_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -67,15 +73,17 @@ async def startup_event():
 
     # ML Service
     try:
-        model_path = str(BASE_DIR / "models" / "trained_model.pkl")
-        ml_service = MLService(model_path, OPENWEATHER_API_KEY)
+        ml_model_dir = BASE_DIR / "models" / "ml" 
+        if not ml_model_dir.exists():
+            raise FileNotFoundError(f"ML model not found at {ml_model_dir}")
+        
+        ml_service = MLService(str(ml_model_dir), OPENWEATHER_API_KEY)
         logger.info("ML Model (.pkl) loaded successfully.")
     except Exception as e:
         logger.error(f"Error initializing ML Service: {e}")
-
     # DL Service
     try:
-        model_path = str(BASE_DIR / "models" / "dl_model.keras")
+        model_path = str(BASE_DIR / "models" / "dl" / "dl_model.keras")
         dl_service = DLService(model_path, OPENWEATHER_API_KEY)
         logger.info("Keras Model (dl_model.keras) loaded successfully.")
     except Exception as e:
@@ -117,12 +125,12 @@ async def predict_ml_endpoint(payload: MLPredictionRequest):
     if not ml_service:
         raise HTTPException(status_code=503, detail="ML Service not available.")
     try:
-        result = await ml_service.predict(
-            age=payload.age,
-            gender=payload.gender,
-            city=payload.city,
-            symptoms=payload.symptoms
-        )
+        result = await ml_service.predict({
+            "age": payload.age,
+            "gender": payload.gender,
+            "city": payload.city,
+            "symptoms": payload.symptoms
+        })
         return result
     except Exception as e:
         logger.error(f"ML Prediction Error: {e}")
@@ -169,8 +177,6 @@ async def rag_chat_endpoint(payload: RAGQueryRequest):
         raise HTTPException(status_code=503, detail="RAG Chat Service not available.")
     try:
         result_dict = rag_service.chat(payload.query) 
-        
-        # If rag_service.chat returns a dict like {"answer": "...", "sources": "..."}
         response = result_dict.get("answer", "No answer found.")
         sources = result_dict.get("sources", "Data retrieved from local FAISS index.")
         

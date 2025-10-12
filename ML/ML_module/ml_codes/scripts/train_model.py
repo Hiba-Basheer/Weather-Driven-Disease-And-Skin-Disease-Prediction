@@ -1,7 +1,7 @@
 """
 Model Training Module for Weather-Driven Disease Prediction
 
-This script trains and evaluates two machine learning models—Random Forest and XGBoost—
+This script trains and evaluates two machine learning models. Random Forest and XGBoost—
 on weather and symptom data to predict diseases. It selects the better-performing model
 based on accuracy and recall, logs metrics using MLflow, and saves the trained model,
 label encoder, and expected feature columns to disk for consistent inference.

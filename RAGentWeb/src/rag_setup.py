@@ -61,7 +61,6 @@ def load_documents(data_dirs: list[Path]) -> list[Document]:
 def split_text(documents: list[Document]) -> list[Document]:
     """
     Splits the loaded documents into smaller, manageable chunks using CharacterTextSplitter.
-    (Matches chunk size/overlap from the second script).
     """
     text_splitter = CharacterTextSplitter(
         chunk_size=500,

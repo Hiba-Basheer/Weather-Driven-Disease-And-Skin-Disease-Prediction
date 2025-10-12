@@ -21,9 +21,7 @@ dotenv_path = r"D:/brototype/week27/DL/.env"
 load_dotenv(dotenv_path)
 
 
-# The definitive, exhaustive list of ALL symptom columns from original CSV,
-# PLUS all specific symptoms provided in user inputs for Heart Attack, Stroke, and Migraine.
-# This MUST match the list in generate_dataset.py exactly.
+
 SYMPTOM_COLUMNS = [
     'chills', 'loss_of_balance', 'reduced_smell_and_taste', 'nasal_polyps', 'Humidity', 'pain_behind_eyes',
     'pain_radiating_to_left_arm', 'dry_skin', 'joint_pain', 'body_aches', 'upper_back_pain', 'joint_stiffness',
@@ -88,7 +86,7 @@ def preprocess_user_input(user_input: str, scaler, text_vectorizer):
             symptoms_text = match.group(1)
             break
 
-    # Fallback: extract known symptom keywords directly
+    # Extract known symptom keywords directly
     if not symptoms_text:
         symptoms_text = " ".join([
             s.replace('_', ' ') for s in SYMPTOM_COLUMNS if re.search(r'\b' + re.escape(s.replace('_', ' ')) + r'\b', user_input, re.IGNORECASE)
@@ -169,7 +167,7 @@ def preprocess_user_input(user_input: str, scaler, text_vectorizer):
 
 # Main execution for testing
 if __name__ == "__main__":
-    # Load preprocessors (you must run train.py first to create these files)
+    # Load preprocessors 
     try:
         scaler = joblib.load('artifacts/scaler.pkl')
         vectorizer_config_path = 'artifacts/text_vectorizer_config.json'

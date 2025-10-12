@@ -6,7 +6,7 @@ Accepts character-based features and returns a disease prediction.
 import joblib
 import os
 import logging
-from src.constants import LABEL_MAP  # Optional: if you centralize labels
+from src.constants import LABEL_MAP  
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")

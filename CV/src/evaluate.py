@@ -92,7 +92,7 @@ def evaluate_model():
         }
         log_metrics_to_mlflow(metrics)
 
-        # Also log the model again for traceability
+        # Log the model again for traceability
         mlflow.keras.log_model(model, artifact_path="model_evaluated")
 
     logging.info("Evaluation complete. Metrics and artifacts logged to MLflow.")

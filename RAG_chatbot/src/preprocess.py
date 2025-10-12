@@ -32,7 +32,7 @@ def preprocess_ml_input(data: dict) -> np.ndarray:
     Preprocess structured input for ML model.
 
     Parameters:
-        data (dict): Dictionary with keys like 'age', 'gender', 'fever', etc.
+        data (dict): Dictionary with keys like 'age', 'gender', 'symptoms', 'city'.
 
     Returns:
         np.ndarray: Preprocessed feature array.

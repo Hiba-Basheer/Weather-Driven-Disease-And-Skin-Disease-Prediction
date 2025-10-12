@@ -173,7 +173,7 @@ def train_model():
         }
         log_metrics_to_mlflow(final_metrics)
 
-        # Log per-class metrics (sanitize names)
+        # Log per-class metrics 
         for class_name in classes:
             if class_name in report:
                 safe_class_name = re.sub(r"[^a-zA-Z0-9_\-./ ]", "_", class_name)

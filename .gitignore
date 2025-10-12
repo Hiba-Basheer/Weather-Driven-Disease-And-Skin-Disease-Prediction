@@ -1,6 +1,5 @@
-# -------------------------------
+
 # Python cache and artifacts
-# -------------------------------
 __pycache__/
 *.py[cod]
 *.pyo
@@ -12,9 +11,7 @@ __pycache__/
 dist/
 build/
 
-# -------------------------------
 # Virtual environments
-# -------------------------------
 .env
 *.env
 .venv/
@@ -31,18 +28,14 @@ CV/open_cv/Scripts/
 CV/open_cv/Include/
 CV/open_cv/pyvenv.cfg
 
-# -------------------------------
 # MLflow & experiment tracking
-# -------------------------------
 mlruns/
 mlflow/
 CV/mlruns/
 logs/
 *.log
 
-# -------------------------------
 # Data (raw, processed, cache)
-# -------------------------------
 data/raw/
 data/processed/
 data/user_inputs.csv
@@ -59,16 +52,12 @@ temp/
 *.npy
 *.npz
 
-# -------------------------------
 # Vector stores & embeddings
-# -------------------------------
 data/vector_store/
 *.faiss
 *.pkl
 
-# -------------------------------
 # Models & checkpoints
-# -------------------------------
 models/
 DL_module/models/
 checkpoints/
@@ -80,9 +69,7 @@ model_artifacts/
 *.pt
 *.joblib
 
-# -------------------------------
 # Reports & plots
-# -------------------------------
 plots/
 *.pdf
 *.png
@@ -90,15 +77,11 @@ plots/
 *.jpeg
 *.svg
 
-# -------------------------------
 # FastAPI static / templates cache
-# -------------------------------
 static/
 templates/__pycache__/
 
-# -------------------------------
 # IDE / OS / Notebook files
-# -------------------------------
 .DS_Store
 Thumbs.db
 .ipynb_checkpoints/
@@ -106,20 +89,14 @@ Thumbs.db
 .idea/
 *.swp
 
-# -------------------------------
 # Miscellaneous
-# -------------------------------
 *.bak
 *.tmp
 
-# -------------------------------
 # RAG chatbot data (large text files)
-# -------------------------------
 RAG_chatbot/data/**/*.txt
 
-# -------------------------------
 # Git line endings
-# -------------------------------
 *.csv text eol=lf
 *.py text eol=lf
 *.html text eol=lf
@@ -132,3 +109,6 @@ RAG_chatbot/data/**/*.txt
 # Ignore DL module artifacts
 DL/artifacts/
 DL/mlflow_artifacts/
+
+
+RAGentWeb/src/test.py

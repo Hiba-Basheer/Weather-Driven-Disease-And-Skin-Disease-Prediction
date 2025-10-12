@@ -36,7 +36,6 @@ BASE_DIR = r"D:\brototype\week27\DL"
 DATA_PATH = r"D:/brototype/week27/DL/DL_module/dl_codes/data/generated_data.csv"
 MLFLOW_EXPERIMENT = "DL_Module_Experiment"
 
-# Ensure Windows paths are valid for MLflow file URIs (forward slashes)
 _MLFLOW_BASE_URI = "file:///" + BASE_DIR.replace("\\", "/")
 MLFLOW_TRACKING_URI = f"{_MLFLOW_BASE_URI}/mlruns"
 MLFLOW_ARTIFACT_LOCATION = f"{_MLFLOW_BASE_URI}/mlflow_artifacts"
@@ -60,8 +59,7 @@ def ensure_directories() -> None:
 def init_mlflow(experiment_name: str) -> None:
     """
     Initialize MLflow with a local tracking URI and ensure the experiment exists with
-    the desired artifact location. Compatible with older MLflow versions that don't
-    accept `artifact_location` in set_experiment().
+    the desired artifact location. 
 
     Args:
         experiment_name: Name of the MLflow experiment.
@@ -71,7 +69,7 @@ def init_mlflow(experiment_name: str) -> None:
     # Try to get the experiment by name; create with custom artifact path if missing.
     existing = mlflow.get_experiment_by_name(experiment_name)
     if existing is None:
-        # Create experiment with artifact_location (works in old/new MLflow)
+        # Create experiment with artifact_location 
         exp_id = mlflow.create_experiment(
             name=experiment_name,
             artifact_location=MLFLOW_ARTIFACT_LOCATION
@@ -82,7 +80,6 @@ def init_mlflow(experiment_name: str) -> None:
         logger.info("Using existing MLflow experiment '%s' (id=%s). Artifacts: %s",
                     existing.name, existing.experiment_id, existing.artifact_location)
 
-    # Always set the current experiment (safe across versions)
     mlflow.set_experiment(experiment_name)
     logger.info("Tracking URI: %s", MLFLOW_TRACKING_URI)
 
@@ -108,7 +105,7 @@ def log_gpu_info() -> None:
     logger.info("Detected GPU: %s", gpu_name)
     mlflow.log_param("gpu_0_name", gpu_name)
 
-    # Optional: log nvidia-smi output as an artifact for deeper debugging
+    # LLog nvidia-smi output as an artifact for deeper debugging
     if shutil.which("nvidia-smi"):
         try:
             smi = subprocess.check_output(["nvidia-smi", "-q"], text=True, stderr=subprocess.STDOUT)
@@ -266,7 +263,7 @@ def create_and_train_model() -> None:
     
         # MLflow params & training
     
-        mlflow.tensorflow.autolog(disable=True)  # keep manual control
+        mlflow.tensorflow.autolog(disable=True) 
         params = {
             'epochs': 50,
             'batch_size': 32,

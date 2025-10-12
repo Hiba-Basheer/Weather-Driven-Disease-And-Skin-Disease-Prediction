@@ -3,31 +3,21 @@ import sys
 import logging
 from dotenv import load_dotenv
 
-# --- Logging Configuration ---
-# Configures the logging system to output messages with a timestamp,
-# log level, and the message itself. This helps in tracking the script's
-# execution flow and debugging.
+# Logging Configuration
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# --- Path Configuration ---
-# The following code block is responsible for dynamically adding the project's
-# 'src' directory to the Python system path. This allows the script to
-# import modules from the 'src' folder (e.g., 'predict.py') regardless of
-# where the script is executed from.
+# Path Configuration
 current_dir = os.path.dirname(__file__)
 ml_codes_root = os.path.abspath(os.path.join(current_dir, ".."))
 src_path = os.path.join(ml_codes_root, "src")
 sys.path.insert(0, src_path)
 
-# --- Environment Variables ---
-# Loads environment variables from a .env file located at the project root.
-# This is a standard practice for managing sensitive information like API keys,
-# keeping them separate from the codebase.
+# Environment Variables
 dotenv_path = os.path.abspath(os.path.join(current_dir, "..", "..", "..", ".env"))
 load_dotenv(dotenv_path)
 
-# Import the main prediction function after configuring the path
+# Import the main prediction function 
 from predict import predict_disease
 
 def main():
@@ -54,7 +44,7 @@ def main():
         'age': 20,
         'gender': 'male',
         'city': 'Kochi',
-        'symptoms': ['asthma', 'sneezing', 'diarrhea', 'sore_throat']
+        'symptoms': ['fever', 'chills', 'headache', 'fatigue', 'chest pain']
     }
 
     model_path = os.path.join(ml_codes_root, "models", "trained_model.pkl")
@@ -63,7 +53,7 @@ def main():
     logger.info("Running prediction...")
     disease = predict_disease(user_input, model_path, label_path, symptom_columns)
     logger.info(f"Predicted Disease: {disease}")
-    print(f"Predicted Disease: {disease}")
+    print( {disease})
 
 if __name__ == "__main__":
     main()
