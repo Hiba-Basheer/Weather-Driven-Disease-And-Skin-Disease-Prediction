@@ -21,7 +21,7 @@ week27/
 │ └── ml_codes/ # Training, prediction, and research notebooks
 ├── RAG_chatbot/ # Retrieval-augmented chatbot module
 │ └── src/ # Chatbot logic and data handling
-├── RAGentWeb/ # Web interface for RAG and data visualization
+├── RAGentWeb/ # Web interface for ML, DL, Image classification, RAG, and Dashboard
 │ ├── data/ # Weather and skin disease datasets
 │ └── src/ # Web backend and services
 ├── .gitignore # Git ignore file (envs, artifacts, etc.)
@@ -56,5 +56,6 @@ Web interface for accessing the RAG system and visualizing data.
 ---
 
 ## Setup Instructions
+
 
 
