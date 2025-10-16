@@ -39,7 +39,7 @@ SYMPTOM_COLUMNS = [
 
 
 def fetch_weather(city_name, api_key):
-    base_url = "http://api.openweathermap.org/data/2.5/weather"
+    base_url = "http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric"
     params = {
         "q": city_name,
         "appid": api_key,
@@ -143,7 +143,7 @@ def preprocess_user_input(user_input: str, scaler, text_vectorizer):
     # Extract city from user input
     city_match = re.search(r'living in ([a-zA-Z\s]+)', user_input, re.IGNORECASE)
     city = city_match.group(1).strip() if city_match else None
-    api_key = os.getenv("WEATHER_API_KEY")
+    api_key = os.getenv("OPENWEATHERMAP_API_KEY")
     if not api_key:
         raise ValueError("Weather API key not found in .env file")
 

@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  cv:
+    build: ./CV
+    container_name: cv_service
+    ports:
+      - "5001:5000"   # Expose CV API on host:5001
+    volumes:
+      - ./CV/resnet_model.h5:/app/models/resnet_model.h5
+    restart: unless-stopped
+
+  dl:
+    build: ./DL
+    container_name: dl_service
+    ports:
+      - "5002:5000"   # Expose DL API on host:5002
+    volumes:
+      - ./DL/DL_module/dl_codes/models/dl_model.keras:/app/DL_module/dl_codes/models/dl_model.keras
+    restart: unless-stopped
+
+  ml:
+    build: ./ML
+    container_name: ml_service
+    ports:
+      - "5003:5000"   # Expose ML API on host:5003
+    volumes:
+      - ./ML/ML_module/ml_codes/models/trained_model.pkl:/app/ML_module/ml_codes/models/trained_model.pkl
+    restart: unless-stopped
+
+  rag_chatbot:
+    build: ./RAG_chatbot
+    container_name: rag_chatbot_service
+    ports:
+      - "5005:5005"   # Chatbot API
+    volumes:
+      - ./RAG_chatbot/models:/app/models
+    restart: unless-stopped
+
+  web:
+    build: ./RAGentWeb
+    container_name: web_service
+    ports:
+      - "8000:8000"
+    depends_on:
+      - cv
+      - dl
+      - ml
+      - rag_chatbot
+    restart: unless-stopped

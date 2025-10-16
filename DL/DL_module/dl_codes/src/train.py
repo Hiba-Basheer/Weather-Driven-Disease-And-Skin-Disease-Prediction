@@ -152,22 +152,14 @@ def save_training_curves(history, out_png_path: str) -> None:
 def create_and_train_model() -> None:
     """
     Full pipeline:
-    1) Load data and drop classes with <=1 instance.
-    2) Encode labels, scale numeric features, vectorize text.
-    3) Stratified train/val/test split.
-    4) Compute class weights and apply SMOTE + undersampling on training set.
-    5) Build multi-input model (numeric + text via BiLSTM).
-    6) Train with Keras callbacks; log to MLflow.
-    7) Save and log preprocessors, curves, checkpoint, and TensorFlow model to MLflow.
-    8) Evaluate on test set and log metrics.
+    - Train DL model and save all artifacts (model, preprocessors, etc.)
+      into D:\brototype\week27\DL\DL_module\dl_codes\models
     """
     try:
         ensure_directories()
         init_mlflow(MLFLOW_EXPERIMENT)
 
-    
-        # Load & clean data
-    
+        # Load data
         df = pd.read_csv(DATA_PATH)
         logger.info("Dataset loaded with shape: %s", df.shape)
 
@@ -178,15 +170,7 @@ def create_and_train_model() -> None:
             logger.warning("Removed classes with 1 or fewer instances: %s. New shape: %s",
                            single_instance_classes, df.shape)
 
-        # Verify all remaining classes have at least 2 members
-        new_class_counts = Counter(df['prognosis'])
-        if any(count < 2 for count in new_class_counts.values()):
-            logger.error("Data still contains classes with fewer than 2 instances. Please check the data.")
-            return
-
-    
-        # Encode labels & preprocess features
-    
+        # Encode labels
         label_encoder = LabelEncoder()
         y = label_encoder.fit_transform(df['prognosis'])
 
@@ -203,28 +187,20 @@ def create_and_train_model() -> None:
         text_vectorizer.adapt(text_features.values)
         text_sequences = text_vectorizer(text_features.values).numpy()
 
-    
-        # Stratified splits
-    
+        # Split data
         X_num_train, X_num_temp, X_text_train, X_text_temp, y_train, y_temp = train_test_split(
             X_numeric, text_sequences, y, test_size=0.3, random_state=42, stratify=y
         )
         X_num_val, X_num_test, X_text_val, X_text_test, y_val, y_test = train_test_split(
             X_num_temp, X_text_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
         )
-        logger.info("Train shapes: num %s, text %s, y %s",
-                    X_num_train.shape, X_text_train.shape, y_train.shape)
 
-    
-        # Class weights & resampling
-    
+        # Handle class imbalance
         class_weights = class_weight.compute_class_weight(
             class_weight='balanced', classes=np.unique(y_train), y=y_train
         )
         class_weights_dict = dict(enumerate(class_weights))
-        logger.info("Calculated class weights: %s", class_weights_dict)
 
-        # Combine numeric + text for sampling, then split back
         X_train_combined = np.hstack((X_num_train, X_text_train))
         over = SMOTE(sampling_strategy='auto', random_state=42)
         under = RandomUnderSampler(sampling_strategy='auto', random_state=42)
@@ -235,14 +211,11 @@ def create_and_train_model() -> None:
         X_resampled_num = X_resampled_combined[:, :num_cols]
         X_resampled_text = X_resampled_combined[:, num_cols:]
 
-    
-        # Build model (numeric + text BiLSTM)
-    
+        # Build model
         num_input = layers.Input(shape=(len(numeric_features),), name='numeric_input')
         x_num = layers.Dense(128, activation='relu')(num_input)
         x_num = layers.Dropout(0.4)(x_num)
         x_num = layers.Dense(64, activation='relu')(x_num)
-        x_num = layers.Dropout(0.3)(x_num)
 
         text_input = layers.Input(shape=(max_len,), name='text_input')
         x_txt = layers.Embedding(input_dim=max_tokens, output_dim=128)(text_input)
@@ -257,130 +230,62 @@ def create_and_train_model() -> None:
 
         model = models.Model(inputs=[num_input, text_input], outputs=output)
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
-        logger.info("Model Summary:")
         model.summary(print_fn=lambda s: logger.info(s))
 
-    
-        # MLflow params & training
-    
-        mlflow.tensorflow.autolog(disable=True) 
+        # === Training ===
         params = {
             'epochs': 50,
             'batch_size': 32,
-            'optimizer': 'adam',
-            'loss_function': 'sparse_categorical_crossentropy',
-            'model_type': 'multi_input_text+numeric_LSTM',
-            'embedding_dim': 128,
-            'dropout': 0.4,
-            'text_layer': 'Bidirectional_LSTM',
-            'max_tokens': max_tokens,
-            'max_len': max_len
         }
 
-        with mlflow.start_run() as run:
+        with mlflow.start_run():
             mlflow.log_params(params)
             log_gpu_info()
 
-            # Save & log preprocessors
-            scaler_path = os.path.join(LOCAL_ARTIFACTS_DIR, "scaler.pkl")
-            joblib.dump(scaler, scaler_path)
-            mlflow.log_artifact(scaler_path)
+            # === Save preprocessors directly into MODELS_DIR ===
+            os.makedirs(MODELS_DIR, exist_ok=True)
 
-            vectorizer_cfg_path = os.path.join(LOCAL_ARTIFACTS_DIR, "text_vectorizer_config.json")
+            scaler_path = os.path.join(MODELS_DIR, "scaler.pkl")
+            joblib.dump(scaler, scaler_path)
+
+            label_encoder_path = os.path.join(MODELS_DIR, "label_encoder.pkl")
+            joblib.dump(label_encoder, label_encoder_path)
+
+            vectorizer_cfg_path = os.path.join(MODELS_DIR, "text_vectorizer_config.json")
             with open(vectorizer_cfg_path, 'w', encoding='utf-8') as f:
                 json.dump(text_vectorizer.get_config(), f)
-            mlflow.log_artifact(vectorizer_cfg_path)
 
-            vocab_path = os.path.join(LOCAL_ARTIFACTS_DIR, "text_vectorizer_vocab.txt")
+            vocab_path = os.path.join(MODELS_DIR, "text_vectorizer_vocab.txt")
             with open(vocab_path, 'w', encoding='utf-8') as f:
                 for word in text_vectorizer.get_vocabulary():
                     f.write(word + '\n')
-            mlflow.log_artifact(vocab_path)
 
-            label_encoder_path = os.path.join(LOCAL_ARTIFACTS_DIR, "label_encoder.pkl")
-            joblib.dump(label_encoder, label_encoder_path)
-            mlflow.log_artifact(label_encoder_path)
+            logger.info("Saved all preprocessors into models directory.")
 
-            logger.info("Preprocessor artifacts logged to MLflow.")
+            # === Training Callbacks ===
+            ckpt_path = os.path.join(MODELS_DIR, "dl_model.keras")
+            early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=7, restore_best_weights=True)
+            ckpt = tf.keras.callbacks.ModelCheckpoint(filepath=ckpt_path, save_best_only=True)
+            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3)
 
-            # Callbacks
-            ckpt_path = os.path.join(LOCAL_ARTIFACTS_DIR, f"best_model_{run.info.run_id}.keras")
-            early_stop = tf.keras.callbacks.EarlyStopping(
-                monitor='val_loss', patience=7, restore_best_weights=True
-            )
-            ckpt = tf.keras.callbacks.ModelCheckpoint(
-                filepath=ckpt_path, monitor='val_loss', save_best_only=True, save_weights_only=False
-            )
-            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
-                monitor='val_loss', factor=0.5, patience=3, min_lr=1e-6
-            )
-
-            # Train
-            logger.info("Starting training...")
             history = model.fit(
-                [X_resampled_num, X_resampled_text], y_resampled,
+                [X_resampled_num, X_resampled_text],
+                y_resampled,
                 validation_data=([X_num_val, X_text_val], y_val),
                 epochs=params['epochs'],
                 batch_size=params['batch_size'],
-                callbacks=[MlflowCallback(), early_stop, ckpt, reduce_lr],
-                verbose=1,
-                class_weight=class_weights_dict
+                callbacks=[early_stop, ckpt, reduce_lr],
+                class_weight=class_weights_dict,
+                verbose=1
             )
 
-            # Curves
-            os.makedirs(MODELS_DIR, exist_ok=True)
+            # Save curves
             plot_path = os.path.join(MODELS_DIR, "performance_metrics.png")
             save_training_curves(history, plot_path)
-            mlflow.log_artifact(plot_path, artifact_path="performance_plots")
 
-            # Test metrics
-            test_loss, test_acc = model.evaluate([X_num_test, X_text_test], y_test, verbose=0)
-            logger.info("Test Loss: %.4f, Test Accuracy: %.4f", test_loss, test_acc)
-            mlflow.log_metric("test_loss", test_loss)
-            mlflow.log_metric("test_accuracy", test_acc)
-
-            y_pred = np.argmax(model.predict([X_num_test, X_text_test]), axis=1)
-            precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
-            recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
-            f1 = f1_score(y_test, y_pred, average='weighted', zero_division=0)
-            mlflow.log_metric("test_precision", precision)
-            mlflow.log_metric("test_recall", recall)
-            mlflow.log_metric("test_f1_score", f1)
-            
-            #  Save results to result.csv
-            result_df = pd.DataFrame({
-                "Metric": ["Test Loss", "Test Accuracy", "Precision", "Recall", "F1 Score"],
-                "Value": [test_loss, test_acc, precision, recall, f1]
-            })
-            result_csv_path = os.path.join(LOCAL_ARTIFACTS_DIR, "result.csv")
-            result_df.to_csv(result_csv_path, index=False)
-            logger.info("Saved results to %s", result_csv_path)
-
-            #  Log result.csv to MLflow
-            mlflow.log_artifact(result_csv_path)
-
-            # Best checkpoint
-            if os.path.exists(ckpt_path):
-                mlflow.log_artifact(ckpt_path)
-                logger.info("Best model checkpoint logged: %s", ckpt_path)
-
-            # Log TF model with signature
-            sample_input = {
-                "numeric_input": X_resampled_num[:2],
-                "text_input": X_resampled_text[:2]
-            }
-            y_pred_sample = model.predict(sample_input)
-            signature = infer_signature(sample_input, y_pred_sample)
-
-            # Use artifact_path for compatibility
-            mlflow.tensorflow.log_model(
-                model,
-                artifact_path="model",
-                signature=signature,
-                input_example=sample_input
-            )
-
-            logger.info("Run complete. Artifacts URI: %s", mlflow.get_artifact_uri())
+            # Save final model
+            model.save(ckpt_path)
+            logger.info("Model and all artifacts saved to %s", MODELS_DIR)
 
     except Exception as e:
         logger.error("An error occurred: %s", e)

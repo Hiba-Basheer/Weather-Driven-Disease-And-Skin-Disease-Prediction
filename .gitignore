@@ -114,3 +114,9 @@ DL/mlflow_artifacts/
 RAGentWeb/src/test.py
 
 allfiles.txt
+
+
+DL/scaler.py
+
+RAGentWeb/.dockerignore
+RAGentWeb/docker-compose.yml

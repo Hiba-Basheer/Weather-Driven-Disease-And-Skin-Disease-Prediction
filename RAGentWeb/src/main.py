@@ -84,7 +84,7 @@ async def startup_event():
     # DL Service
     try:
         model_path = str(BASE_DIR / "models" / "dl" / "dl_model.keras")
-        dl_service = DLService(model_path, OPENWEATHER_API_KEY)
+        dl_service = DLService(OPENWEATHER_API_KEY)
         logger.info("Keras Model (dl_model.keras) loaded successfully.")
     except Exception as e:
         logger.error(f"Error initializing DL Service: {e}")
