@@ -90,7 +90,7 @@ class DLService:
         match = re.search(r"I am (\d+)\s+years? old", text, re.IGNORECASE)
         return int(match.group(1)) if match else 30
 
-    # Prediction #
+    # Prediction 
 
     async def predict(self, user_text: str) -> dict:
         """Predict disease using user symptoms + real-time weather features."""
@@ -128,7 +128,7 @@ class DLService:
             # Vectorize text
             X_text_seq = self.text_vectorizer(np.array([processed_text])).numpy()
 
-            # Predict (use named input dict to match training)
+            # Predict
             predictions = self.model.predict(
                 {"numeric_input": X_numeric_scaled, "text_input": X_text_seq},
                 verbose=0
@@ -170,12 +170,11 @@ class DLService:
 # if __name__ == "__main__":
 #     async def test_dl_service():
 #         """Run a simple test prediction for verification."""
-#         # Read from environment variable (safe)
+#         # Read from environment variable 
 #         openweather_api_key = os.getenv("OPENWEATHERMAP_API_KEY")
 
 #         if not openweather_api_key:
 #             print("Missing environment variable: OPENWEATHER_API_KEY")
-#             print("Please set it before running the script.")
 #             return
 
 #         try:
