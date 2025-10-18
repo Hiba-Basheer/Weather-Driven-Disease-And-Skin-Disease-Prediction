@@ -14,6 +14,7 @@ class DLService:
     """
     Deep Learning (DL) service for disease prediction.
     Combines user free-text input with age and weather features.
+    Supports both OpenWeatherMap and Groq APIs.
     """
 
     # Local artifact paths
@@ -36,12 +37,13 @@ class DLService:
         "Malaria"
     ]
 
-    def __init__(self, api_key: str):
+    def __init__(self, openweather_api_key: str, groq_api_key: str = None):
         """
-        Initialize the DLService with pretrained model and text vectorizer.
+        Initialize the DLService with pretrained model, text vectorizer, and API keys.
 
         Args:
-            api_key (str): OpenWeather API key.
+            openweather_api_key (str): OpenWeatherMap API key.
+            groq_api_key (str, optional): Groq API key. Default is None.
         """
         if not os.path.exists(self.MODEL_PATH):
             raise FileNotFoundError(f"DL model not found at: {self.MODEL_PATH}")
@@ -57,32 +59,22 @@ class DLService:
             self.VECTORIZER_CONFIG_PATH,
             self.VECTORIZER_VOCAB_PATH
         )
-
-        if self.text_vectorizer:
-            self.MAX_LEN = self.text_vectorizer.get_config().get("output_sequence_length", 50)
-            logger.info(f"TextVectorization layer initialized with MAX_LEN={self.MAX_LEN}.")
-        else:
-            self.MAX_LEN = 50
+        self.MAX_LEN = (
+            self.text_vectorizer.get_config().get("output_sequence_length", 50)
+            if self.text_vectorizer else 50
+        )
+        if not self.text_vectorizer:
             logger.warning("Text vectorizer failed to initialize. DL prediction may be unreliable.")
 
-        self.api_key = api_key
+        # API keys
+        self.openweather_api_key = openweather_api_key
+        self.groq_api_key = groq_api_key
 
     # Internal Utilities
     def _load_text_vectorizer_manual(self, config_path: str, vocab_path: str):
-        """
-        Load TextVectorization layer from config and vocabulary files.
-
-        Args:
-            config_path (str): Path to the JSON configuration file.
-            vocab_path (str): Path to the vocabulary text file.
-
-        Returns:
-            TextVectorization: Reconstructed text vectorizer layer.
-        """
         if not os.path.exists(config_path) or not os.path.exists(vocab_path):
             logger.error(f"Vectorizer config/vocab missing at: {config_path} or {vocab_path}")
             return None
-
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 config = json.load(f)
@@ -92,22 +84,12 @@ class DLService:
             with open(vocab_path, "r", encoding="utf-8") as f:
                 vocab = [line.strip() for line in f if line.strip()]
             vectorizer.set_vocabulary(vocab)
-
             return vectorizer
         except Exception as e:
             logger.error(f"Failed to load TextVectorization layer: {e}")
             return None
 
     def _preprocess_text(self, text: str) -> str:
-        """
-        Preprocess input text to align with training data.
-
-        Args:
-            text (str): Raw user input text.
-
-        Returns:
-            str: Cleaned and normalized text.
-        """
         text = text.lower()
         text = re.sub(r"[^a-z0-9\s]", "", text)
 
@@ -126,50 +108,40 @@ class DLService:
         }
         for k, v in replacements.items():
             text = text.replace(k, v)
-
         return text
 
     # Data Extraction
     def extract_city_from_text(self, text: str) -> str:
-        """Extract city name from input text."""
         match = re.search(r"living in ([A-Za-z\s]+)", text, re.IGNORECASE)
         return match.group(1).strip() if match else "Unknown"
 
     def extract_age_from_text(self, text: str) -> int:
-        """Extract age value from input text."""
         match = re.search(r"I am (\d+)\s+years? old", text, re.IGNORECASE)
         return int(match.group(1)) if match else 30
 
+    # Placeholder for Groq API usage
+    def call_groq_api(self, prompt: str) -> dict:
+        
+        if not self.groq_api_key:
+            logger.warning("Groq API key not provided. Skipping Groq call.")
+            return {"error": "Groq API key not available"}
+        # Add Groq API call logic here
+        logger.info(f"Calling Groq API with prompt: {prompt}")
+        return {"response": "Groq API response placeholder"}
+
     # Main Prediction Method
     async def predict(self, user_text: str) -> dict:
-        """
-        Predict disease from user symptoms and weather data.
-
-        Args:
-            user_text (str): User-provided input describing symptoms and location.
-
-        Returns:
-            dict: Prediction result with confidence and metadata.
-        """
         city = self.extract_city_from_text(user_text)
         age = self.extract_age_from_text(user_text)
         processed_text = self._preprocess_text(user_text)
 
         # Fetch live weather data
-        weather_data = await fetch_and_log_weather_data(city, self.api_key, user_text, service_type="DL")
+        weather_data = await fetch_and_log_weather_data(city, self.openweather_api_key, user_text, service_type="DL")
         if "error" in weather_data:
-            return {
-                "error": weather_data["error"],
-                "prediction": "N/A",
-                "status": "Failed to retrieve weather data."
-            }
+            return {"error": weather_data["error"], "prediction": "N/A", "status": "Failed to retrieve weather data."}
 
         if not self.text_vectorizer:
-            return {
-                "error": "Text vectorizer not initialized. DL prediction disabled.",
-                "prediction": "N/A",
-                "status": "Error"
-            }
+            return {"error": "Text vectorizer not initialized. DL prediction disabled.", "prediction": "N/A", "status": "Error"}
 
         try:
             # Vectorize text
@@ -187,21 +159,19 @@ class DLService:
             if structured_features.shape[1] < 5:
                 missing = 5 - structured_features.shape[1]
                 structured_features = np.pad(structured_features, ((0, 0), (0, missing)), mode='constant')
+
             # Model prediction
             prediction_proba = self.model.predict([structured_features, padded_text_input])[0]
             predicted_index = np.argmax(prediction_proba)
             prediction_label = (
-                self.DISEASE_LABELS[predicted_index]
-                if 0 <= predicted_index < len(self.DISEASE_LABELS)
+                self.DISEASE_LABELS[predicted_index] if 0 <= predicted_index < len(self.DISEASE_LABELS)
                 else f"Unknown Class {predicted_index}"
             )
 
             return {
                 "prediction": prediction_label,
                 "confidence": float(np.max(prediction_proba)),
-                "raw_weather_data": {
-                    k: float(v) for k, v in weather_data.items() if isinstance(v, (int, float))
-                },
+                "raw_weather_data": {k: float(v) for k, v in weather_data.items() if isinstance(v, (int, float))},
                 "status": "Success",
                 "note": user_text,
                 "city": city

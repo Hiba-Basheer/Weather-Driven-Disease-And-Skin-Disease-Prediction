@@ -118,5 +118,5 @@ allfiles.txt
 
 DL/scaler.py
 
+RAGentWeb/dockerfile
 RAGentWeb/.dockerignore
-RAGentWeb/docker-compose.yml

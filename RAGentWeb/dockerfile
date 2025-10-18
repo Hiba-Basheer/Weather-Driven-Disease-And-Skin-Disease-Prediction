@@ -1,27 +1,36 @@
-# Use lightweight Python base image
-FROM python:3.10-slim
+# Use lightweight Debian-based image
+FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements first (for caching)
-COPY requirements.txt .
-
-# Install dependencies efficiently
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn uvicorn scikit-learn && \
-    rm -rf /root/.cache/pip
-
-# Copy only essential source and model files
-COPY src ./src
-COPY models ./models
-
-# Expose FastAPI port
-EXPOSE 8000
-
-# Environment variable
+# Prevent Python from writing .pyc files and using buffered output
+ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Run the app with Gunicorn and Uvicorn workers
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Install essential dependencies for building Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    libffi-dev \
+    libssl-dev \
+    libblas-dev \
+    liblapack-dev \
+    gfortran \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip before installing dependencies
+RUN pip install --upgrade pip setuptools wheel
+
+# Copy requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire app
+COPY . .
+
+EXPOSE 8000
+
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
