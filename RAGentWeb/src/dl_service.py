@@ -17,8 +17,8 @@ class DLService:
     while supporting real-time weather data retrieval via OpenWeatherMap API.
     """
 
-    # Paths to pretrained model and artifacts
-    MODEL_DIR = r"D:\brototype\week27\DL\DL_module\dl_codes\models"
+    # DOCKER-COMPATIBLE PATHS
+    MODEL_DIR = "/app/models/dl"
     MODEL_PATH = os.path.join(MODEL_DIR, "dl_model.keras")
     SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
     LABEL_ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.pkl")
@@ -54,10 +54,10 @@ class DLService:
         self.text_vectorizer.set_vocabulary(vocab)
         logger.info("Text vectorizer loaded successfully.")
 
-        # Store API key for later use
+        # Store API key
         self.openweather_api_key = openweather_api_key
 
-    # Helper Methods 
+    # HELPER METHODS
 
     def _normalize_text(self, text: str) -> str:
         """Clean and normalize user text before vectorization."""
@@ -90,7 +90,7 @@ class DLService:
         match = re.search(r"I am (\d+)\s+years? old", text, re.IGNORECASE)
         return int(match.group(1)) if match else 30
 
-    # Prediction 
+    # PREDICTION METHOD (ASYNC)
 
     async def predict(self, user_text: str) -> dict:
         """Predict disease using user symptoms + real-time weather features."""
@@ -159,34 +159,3 @@ class DLService:
         except Exception as e:
             logger.error(f"DL prediction failed: {e}", exc_info=True)
             return {"error": str(e), "status": "Error", "prediction": "N/A"}
-
-
-
-# TEST SECTION 
-# import os
-# import asyncio
-# import json
-
-# if __name__ == "__main__":
-#     async def test_dl_service():
-#         """Run a simple test prediction for verification."""
-#         # Read from environment variable 
-#         openweather_api_key = os.getenv("OPENWEATHERMAP_API_KEY")
-
-#         if not openweather_api_key:
-#             print("Missing environment variable: OPENWEATHER_API_KEY")
-#             return
-
-#         try:
-#             dl_service = DLService(openweather_api_key=openweather_api_key)
-
-#             user_input = "I am 35 years old living in Calicut. I am feeling severe headache, chest pain and dizziness."
-#             result = await dl_service.predict(user_input)
-
-#             print("\n=== DLService Test Result ===")
-#             print(json.dumps(result, indent=4))
-
-#         except Exception as e:
-#             print(f"Error during test: {e}")
-
-#     asyncio.run(test_dl_service())
