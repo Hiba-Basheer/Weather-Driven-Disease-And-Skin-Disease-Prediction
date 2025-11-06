@@ -1,0 +1,42 @@
+# .dockerignore
+__pycache__/
+*.pyc *.pyo *.pyd
+.env
+.venv*
+web_venv/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.git/
+.gitignore
+*.md
+*.log
+temp_downloads/
+downloads/
+temp/
+data/skin_diseases/
+data/weather_related_disease/
+data/**
+!data/vector_store/
+!data/vector_store/**
+static/images/
+static/videos/
+static/fonts/
+
+!templates/
+!templates/**
+!templates/**/*.html
+
+*.ipynb
+notebooks/
+tests/
+build/
+dist/
+*.tar *.gz *.zip *.bak
+models/**/checkpoints/
+models/**/artifacts/
+models/**/runs/
+*.bin
+*.index
+!models/embeddings/

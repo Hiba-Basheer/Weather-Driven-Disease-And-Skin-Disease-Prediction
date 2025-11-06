@@ -118,5 +118,3 @@ allfiles.txt
 
 DL/scaler.py
 
-RAGentWeb/dockerfile
-RAGentWeb/.dockerignore

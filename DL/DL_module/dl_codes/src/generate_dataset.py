@@ -2,6 +2,8 @@ import pandas as pd
 import random
 import logging
 from pathlib import Path
+import os 
+from groq import Groq 
 import re
 import numpy as np
 
@@ -12,16 +14,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+GROQ_CLIENT = None
+try:
+    GROQ_CLIENT = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    if not GROQ_CLIENT.api_key:
+        logger.error("GROQ_API_KEY not found. Text generation will use template fallback.")
+        GROQ_CLIENT = None
+    else:
+        logger.info("Groq Client initialized successfully.")
+except Exception as e:
+    logger.error("Error during Groq client initialization: %s. Text generation will use template fallback.", e)
+    GROQ_CLIENT = None
 
 def load_dataset(file_path: str) -> pd.DataFrame:
     """
     Load the weather-related disease dataset from a CSV file.
-
-    Args:
-        file_path (str): Path to the input CSV file.
-
-    Returns:
-        pd.DataFrame: Loaded dataset as a DataFrame.
     """
     try:
         df = pd.read_csv(file_path)
@@ -34,37 +41,76 @@ def load_dataset(file_path: str) -> pd.DataFrame:
         logger.error("Error loading dataset: %s", e)
         raise
 
-
-def generate_text(row: pd.Series, symptom_columns: list, cities: list) -> str:
+def create_llm_generation_prompt(row: pd.Series, symptom_columns: list, cities: list) -> str:
     """
-    Generate descriptive text for each row in the dataset.
-
-    Args:
-        row (pd.Series): A row from the dataset.
-        symptom_columns (list): List of symptom column names.
-        cities (list): List of city names.
-
-    Returns:
-        str: Generated descriptive text.
+    Generate a detailed prompt for the LLM based on the row's structured data.
     """
     symptoms = [col for col in symptom_columns if row.get(col, 0) == 1]
     symptom_str = ", ".join(symptoms) if symptoms else "no specific symptoms"
-    gender = "male" if row.get("Gender", 0) == 1 else "female"
+    
+    gender_word = "male" if row.get("Gender", 0) == 1 else "female"
     age = row.get("Age", "unknown")
     city = random.choice(cities)
+    temp = row.get("Temperature (C)", "N/A")
+    humidity = row.get("Humidity", "N/A")
+    prognosis = row.get("prognosis", "unknown")
 
-    return f"I am a {gender} aged {age}, living in {city}. I have been experiencing {symptom_str}."
+    prompt = f"""
+    You are a professional medical writer tasked with generating a realistic patient intake description. 
+    Always respond with ONLY the patient description text, without any greetings, titles, or concluding remarks.
+    
+    **Context:**
+    - Patient Age: {age}
+    - Patient Gender: {gender_word}
+    - Patient Location (for tone/background only): {city}
+    - Weather: Temperature {temp}°C, Humidity {humidity}
+    - Diagnosis (for context, DO NOT mention this in the output): {prognosis}
+    
+    **Core Symptoms to Describe:** {symptom_str}
+    
+    **Task:**
+    Write a 1-3 sentence patient description reporting their symptoms.
+    - CRUCIALLY, the language must be highly varied, informal, and sound like natural patient speech.
+    - Do NOT use the phrasing 'I am a male/female aged X, living in Y...'
+    - Do NOT just list the symptoms. Integrate them naturally.
+    - Introduce temporal (time) or emotional language (e.g., 'since this morning', 'feel awful').
+    - If symptoms are 'no specific symptoms', generate a neutral status update (e.g., 'I feel fine, just here for a check-up.').
+    """
+    return prompt
 
+def generate_text_with_groq(prompt_text: str, fallback_text: str) -> str:
+    """
+    Calls the Groq API to generate text, with a fallback to the rule-based template.
+    """
+    if GROQ_CLIENT is None:
+        return fallback_text
+
+    try:
+        system_message = {
+            "role": "system",
+            "content": "You are a professional medical writer tasked with generating a realistic, natural, and informal patient intake description based on provided facts. Always respond with only the patient description text, in 1-3 sentences."
+        }
+        
+        user_message = {
+            "role": "user",
+            "content": prompt_text
+        }
+        
+        # Using Llama 3 for fast, high-quality text generation
+        chat_completion = GROQ_CLIENT.chat.completions.create(
+            messages=[system_message, user_message],
+            model="llama3-8b-8192", 
+            temperature=0.7, # Allows for more creative variability
+            max_tokens=256
+        )
+        
+        return chat_completion.choices[0].message.content.strip()
+
+    except Exception as e:
+        logger.error(f"Groq API call failed: {e}. Falling back to rule-based text.")
+        return fallback_text
 
 def save_dataset(df: pd.DataFrame, output_path: str) -> None:
-    """
-    Save the modified dataset with generated text to a CSV file.
-    Ensures 'prognosis' is the last column.
-
-    Args:
-        df (pd.DataFrame): DataFrame containing the dataset.
-        output_path (str): Path to save the output CSV file.
-    """
     try:
         if "prognosis" in df.columns:
             cols = [c for c in df.columns if c != "prognosis"] + ["prognosis"]
@@ -76,11 +122,8 @@ def save_dataset(df: pd.DataFrame, output_path: str) -> None:
         logger.error("Error saving dataset: %s", e)
         raise
 
-
 def create_synthetic_examples_df(symptom_cols: list, cities: list) -> pd.DataFrame:
-    """
-    Creates a DataFrame of synthetic examples for 'Heart Attack', 'Stroke', and 'Migraine'.
-    """
+    
     synthetic_data = []
 
     # Core symptoms for each disease
@@ -144,11 +187,11 @@ def create_synthetic_examples_df(symptom_cols: list, cities: list) -> pd.DataFra
     synthetic_df = pd.DataFrame(synthetic_data)
     logger.info(f"Created {len(synthetic_df)} synthetic examples DataFrame.")
     return synthetic_df
-
-
+    
+    
 def main():
     """
-    Main function to load dataset, generate text, and save the updated dataset.
+    Main function to load dataset, generate LLM text, and save the updated dataset.
     """
     input_path = Path("D:/brototype/week27/DL/DL_module/dl_codes/data/Weather-related disease prediction.csv")
     output_path = Path("D:/brototype/week27/DL/DL_module/dl_codes/data/generated_data.csv")
@@ -177,7 +220,7 @@ def main():
     # Load dataset
     weather_df = load_dataset(str(input_path))
 
-    # Ensure all symptom columns exist
+    # Ensure all symptom columns exist 
     for symptom in symptom_cols:
         if symptom not in weather_df.columns:
             weather_df[symptom] = 0
@@ -192,7 +235,7 @@ def main():
     # Generate synthetic dataset
     synthetic_df = create_synthetic_examples_df(symptom_cols, cities)
 
-    # Combine datasets
+    # Combine datasets 
     all_combined_cols = list(set(weather_df.columns) | set(synthetic_df.columns))
     weather_df = weather_df.reindex(columns=all_combined_cols, fill_value=0)
     synthetic_df = synthetic_df.reindex(columns=all_combined_cols, fill_value=0)
@@ -200,15 +243,48 @@ def main():
     combined_df = pd.concat([weather_df, synthetic_df], ignore_index=True)
     logger.info(f"Combined dataset shape: {combined_df.shape}")
 
-    # Ensure symptom columns are numeric
+    # Ensure symptom columns are numeric 
     for col in symptom_cols:
         combined_df[col] = pd.to_numeric(combined_df.get(col, 0), errors='coerce').fillna(0).astype(int)
 
-    # Generate features
+    # Generate features 
+    
+    # 1. Create the symptom profile column 
     combined_df['symptom_profile'] = combined_df.apply(
         lambda row: " ".join([col for col in symptom_cols if row[col] == 1]), axis=1
     )
-    combined_df['text'] = combined_df.apply(generate_text, axis=1, args=(symptom_cols, cities))
+    
+    def rule_based_text_generator(row: pd.Series):
+        symptoms = row['symptom_profile'].replace(' ', ', ')
+        gender = "male" if row.get("Gender", 0) == 1 else "female"
+        age = row.get("Age", "unknown")
+        city = random.choice(cities)
+        return f"I am a {gender} aged {age}, living in {random.choice(cities)}. I have been experiencing {symptoms}."
+
+    combined_df['rule_based_text_fallback'] = combined_df.apply(rule_based_text_generator, axis=1)
+
+    # 3. Generate the new LLM-based text
+    logger.info("Starting Groq-powered text augmentation...")
+    
+    llm_generated_texts = []
+    
+    for index, row in combined_df.iterrows():
+        # Get the detailed prompt
+        prompt = create_llm_generation_prompt(row, symptom_cols, cities)
+        
+        # Get the fallback text 
+        fallback = row['rule_based_text_fallback']
+        
+        # Call Groq 
+        llm_text = generate_text_with_groq(prompt, fallback)
+        llm_generated_texts.append(llm_text)
+
+    # Assign the new, realistic text to the 'text' column
+    combined_df['text'] = llm_generated_texts
+    
+    # Drop the temporary fallback column
+    combined_df = combined_df.drop(columns=['rule_based_text_fallback'])
+
     combined_df['symptom_count'] = combined_df[symptom_cols].sum(axis=1)
 
     save_dataset(combined_df, str(output_path))

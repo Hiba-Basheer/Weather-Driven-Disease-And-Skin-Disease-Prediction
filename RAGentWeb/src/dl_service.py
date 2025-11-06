@@ -1,161 +1,263 @@
+"""
+dl_service.py
+----------------
+Deep Learning-based disease prediction using free-text user input and live weather data.
+
+It supports TextVectorization loading, input validation,
+and robust parsing for symptom text.
+"""
+
 import os
 import re
 import json
 import logging
 import numpy as np
 import joblib
+import requests
+import asyncio
 import tensorflow as tf
 from tensorflow.keras import layers
-from .weather_fetcher import fetch_and_log_weather_data  
+from pathlib import Path
+from typing import Dict, Any
+from dotenv import load_dotenv
+
+# Configure TensorFlow logging
+tf.get_logger().setLevel('ERROR')
+
+# Detect environment 
+IS_DOCKER = os.path.exists("/.dockerenv") or os.getenv("DOCKER", "false").lower() == "true"
+MODEL_ROOT = "/app/models/dl" if IS_DOCKER else os.path.join(os.path.dirname(__file__), "..", "models", "dl")
 
 logger = logging.getLogger("DLService")
 
-class DLService:
-    """
-    Deep Learning (DL) service for disease prediction.
-    Uses the same preprocessing, scaler, and model structure as the original DL module,
-    while supporting real-time weather data retrieval via OpenWeatherMap API.
-    """
+# MODEL CONSTANTS 
+SYMPTOM_COLUMNS = [
+    'chills', 'loss_of_balance', 'reduced_smell_and_taste', 'nasal_polyps', 'pain_behind_eyes',
+    'pain_radiating_to_left_arm', 'dry_skin', 'joint_pain', 'body_aches', 'upper_back_pain',
+    'joint_stiffness', 'knee_ache', 'slurred_speech', 'back_pain', 'arm_pain', 'rapid_heart_rate',
+    'rapid_breathing', 'throbbing_headache', 'diarrhea', 'high_cholesterol', 'vomiting',
+    'sinus_headache', 'sweating', 'lightheadedness', 'shortness_of_breath', 'sore_throat',
+    'trouble_seeing', 'sensitivity_to_light', 'trouble_speaking', 'weakness_in_arms_or_legs',
+    'swollen_glands', 'fever', 'anxiety', 'jaw_pain', 'high_fever', 'weakness', 'nausea',
+    'dizziness', 'abdominal_pain', 'runny_nose', 'sneezing', 'sensitivity_to_sound',
+    'sudden_numbness_on_one_side', 'facial_pain', 'bleeding_gums', 'fatigue', 'loss_of_appetite',
+    'skin_irritation', 'headache', 'severe_headache', 'confusion', 'chest_pain', 'diabetes',
+    'cough', 'hiv_aids', 'asthma_history', 'itchiness', 'asthma', 'jaw_discomfort',
+    'high_blood_pressure', 'blurred_vision', 'rashes', 'obesity', 'shivering', 'pain_behind_the_eyes'
+]
 
-    # DOCKER-COMPATIBLE PATHS
-    MODEL_DIR = "/app/models/dl"
+TOTAL_BINARY_FEATURES = len(SYMPTOM_COLUMNS) + 1  # 65 + 1 (gender)
+EXPECTED_NUMERIC_SHAPE = (None, 5 + TOTAL_BINARY_FEATURES)  # (None, 71)
+EXPECTED_TEXT_SHAPE = (None, 100)
+
+
+class DLService:
+    """Deep Learning service for disease prediction."""
+
+    MODEL_DIR = MODEL_ROOT
     MODEL_PATH = os.path.join(MODEL_DIR, "dl_model.keras")
     SCALER_PATH = os.path.join(MODEL_DIR, "scaler.pkl")
     LABEL_ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.pkl")
     TEXT_CONFIG_PATH = os.path.join(MODEL_DIR, "text_vectorizer_config.json")
     TEXT_VOCAB_PATH = os.path.join(MODEL_DIR, "text_vectorizer_vocab.txt")
 
-    def __init__(self, openweather_api_key: str):
-        """Initialize DLService with pretrained model, scaler, and text vectorizer."""
-        if not os.path.exists(self.MODEL_PATH):
-            raise FileNotFoundError(f"DL model not found at {self.MODEL_PATH}")
+    def __init__(self, openweather_api_key: str = None):
+        """Initialize the DL service by loading model components."""
+        self.openweather_api_key = openweather_api_key or os.getenv("OPENWEATHERMAP_API_KEY")
+        if not self.openweather_api_key:
+            raise ValueError("OPENWEATHERMAP_API_KEY not set in environment or .env file.")
 
-        # Load trained model
+        self._validate_model_files()
         tf.get_logger().setLevel(logging.ERROR)
+
         self.model = tf.keras.models.load_model(self.MODEL_PATH)
-        tf.get_logger().setLevel(logging.INFO)
-        logger.info(f"Model loaded successfully from: {self.MODEL_PATH}")
+        logger.info("DL model loaded successfully.")
 
-        # Load scaler
         self.scaler = joblib.load(self.SCALER_PATH)
-        logger.info("Scaler loaded successfully.")
-
-        # Load label encoder
         self.label_encoder = joblib.load(self.LABEL_ENCODER_PATH)
-        logger.info("Label encoder loaded successfully.")
+        self.text_vectorizer = self._load_text_vectorizer()
 
-        # Load text vectorizer
-        with open(self.TEXT_CONFIG_PATH, "r", encoding="utf-8") as f:
-            config = json.load(f)
-        config.pop("vocabulary", None)
-        self.text_vectorizer = layers.TextVectorization.from_config(config)
-        with open(self.TEXT_VOCAB_PATH, "r", encoding="utf-8") as f:
-            vocab = [line.strip() for line in f if line.strip()]
-        self.text_vectorizer.set_vocabulary(vocab)
-        logger.info("Text vectorizer loaded successfully.")
+        self._validate_model_inputs()
 
-        # Store API key
-        self.openweather_api_key = openweather_api_key
+    def _validate_model_files(self) -> None:
+        """Ensure all required model files exist."""
+        required_files = [
+            self.MODEL_PATH,
+            self.SCALER_PATH,
+            self.LABEL_ENCODER_PATH,
+            self.TEXT_CONFIG_PATH,
+            self.TEXT_VOCAB_PATH
+        ]
+        missing = [f for f in required_files if not os.path.exists(f)]
+        if missing:
+            raise FileNotFoundError(
+                f"Missing model files in {self.MODEL_DIR}:\n" +
+                "\n".join([f"  - {os.path.basename(p)}" for p in missing])
+            )
 
-    # HELPER METHODS
-
-    def _normalize_text(self, text: str) -> str:
-        """Clean and normalize user text before vectorization."""
-        text = text.lower()
-        text = re.sub(r"[^a-z0-9\s]", " ", text)
-        replacements = {
-            "joint pain": "joint_pain",
-            "abdominal pain": "abdominal_pain",
-            "high fever": "high_fever",
-            "runny nose": "runny_nose",
-            "pain behind the eyes": "pain_behind_the_eyes",
-            "chest pain": "chest_pain",
-            "shortness of breath": "shortness_of_breath",
-            "skin irritation": "skin_irritation",
-            "throbbing headache": "throbbing_headache",
-            "back pain": "back_pain",
-            "knee ache": "knee_ache",
-        }
-        for phrase, token in replacements.items():
-            text = text.replace(phrase, token)
-        return text.strip()
-
-    def _extract_city(self, text: str) -> str:
-        """Extract city name from input text."""
-        match = re.search(r"living in ([A-Za-z\s]+?)(?:\s+(?:and|with|but|while|suffering|having|experiencing|,|\.|$))", text, re.IGNORECASE)
-        return match.group(1).strip() if match else "Unknown"
-
-    def _extract_age(self, text: str) -> int:
-        """Extract user age from text."""
-        match = re.search(r"I am (\d+)\s+years? old", text, re.IGNORECASE)
-        return int(match.group(1)) if match else 30
-
-    # PREDICTION METHOD (ASYNC)
-
-    async def predict(self, user_text: str) -> dict:
-        """Predict disease using user symptoms + real-time weather features."""
+    def _load_text_vectorizer(self) -> layers.TextVectorization:
+        """Load Keras TextVectorization layer from config and vocabulary."""
         try:
-            city = self._extract_city(user_text)
-            age = self._extract_age(user_text)
-            processed_text = self._normalize_text(user_text)
+            with open(self.TEXT_CONFIG_PATH, "r", encoding="utf-8") as f:
+                config = json.load(f)
+            with open(self.TEXT_VOCAB_PATH, "r", encoding="utf-8") as f:
+                vocab = [line.strip() for line in f]
+            vectorizer = layers.TextVectorization.from_config(config)
+            vectorizer.set_vocabulary(vocab)
+            logger.info("TextVectorization layer loaded.")
+            return vectorizer
+        except Exception as e:
+            logger.error(f"Error loading TextVectorization: {e}")
+            raise
 
-            # Fetch live weather data asynchronously
-            weather_data = await fetch_and_log_weather_data(
-                city, self.openweather_api_key, user_text, service_type="DL"
+    def _validate_model_inputs(self) -> None:
+        """Validate model input layer names and shapes."""
+        inputs = {inp.name.split(":")[0]: inp.shape for inp in self.model.inputs}
+        if 'numeric_input' not in inputs or 'text_input' not in inputs:
+            raise ValueError("Model inputs must include 'numeric_input' and 'text_input'.")
+        if inputs['numeric_input'] != EXPECTED_NUMERIC_SHAPE:
+            raise ValueError(f"Expected numeric shape {EXPECTED_NUMERIC_SHAPE}, got {inputs['numeric_input']}")
+        if inputs['text_input'][1] != EXPECTED_TEXT_SHAPE[1]:
+            raise ValueError(f"Expected text length {EXPECTED_TEXT_SHAPE[1]}, got {inputs['text_input'][1]}")
+
+    def _standardize_symptoms(self, text: str) -> str:
+        """Normalize symptom text for consistent token mapping."""
+        text = text.lower()
+        replacements = {
+            "throbbing headache": "throbbing_headache",
+            "severe headache": "severe_headache",
+            "pain behind the eyes": "pain_behind_the_eyes",
+            "light sensitivity": "sensitivity_to_light",
+            "blurred vision": "blurred_vision",
+            "trouble speaking": "trouble_speaking",
+            "loss of balance": "loss_of_balance",
+            "shortness of breath": "shortness_of_breath",
+            "chest pain": "chest_pain",
+        }
+        for old, new in replacements.items():
+            text = text.replace(old, new)
+        text = re.sub(r'[,:\.\-\/]', ' ', text)
+        text = re.sub(r'\band\b', ' ', text)
+        return re.sub(r'\s+', ' ', text).strip()
+
+    def _fetch_weather(self, city: str) -> tuple:
+        """Fetch live weather data using OpenWeather API."""
+        default_weather = (37.0, 0.70, 18.0)
+        if not city or city.lower() == "unknown":
+            return default_weather
+        try:
+            response = requests.get(
+                "http://api.openweathermap.org/data/2.5/weather",
+                params={"q": city, "appid": self.openweather_api_key, "units": "metric"},
+                timeout=8
+            ).json()
+            if response.get("main"):
+                temp = response["main"]["temp"]
+                humidity = response["main"]["humidity"] / 100.0
+                wind = response.get("wind", {}).get("speed", 5.0) * 3.6
+                return temp, humidity, wind
+        except Exception as e:
+            logger.warning(f"Weather fetch failed for {city}: {e}")
+        return default_weather
+
+    async def predict(self, user_text: str) -> Dict[str, Any]:
+        """Predict disease from free-text user input."""
+        try:
+            raw = user_text.strip()
+            age = float(re.search(r'age\s*(\d{1,3})', raw, re.I).group(1)) if re.search(r'age\s*(\d{1,3})', raw, re.I) else 30.0
+
+            gender = 1 if re.search(r'\bmale\b', raw, re.I) else 0
+            city_match = re.search(r'(?:from|city|living in)\s*([a-zA-Z\s]+)', raw, re.I)
+            city = city_match.group(1).strip() if city_match else "Unknown"
+
+            symptom_match = re.search(
+                r'(?:symptom[s]*[:\-\s]*|I\s+have\s+|I\'m\s+experiencing\s+|suffering\s+from\s+)(.*)',
+                raw, re.I
             )
+            symptoms_raw = symptom_match.group(1).strip() if symptom_match else raw
+            symptoms_std = self._standardize_symptoms(symptoms_raw)
+            symptom_count = len(symptoms_std.split())
 
-            if "error" in weather_data:
-                return {
-                    "error": weather_data["error"],
-                    "prediction": "N/A",
-                    "status": "Failed to retrieve weather data."
-                }
+            temp_c, humidity, wind_kmh = self._fetch_weather(city)
 
-            # Build numeric feature array
-            temp_c = weather_data.get("temp", 25.0)
-            humidity = weather_data.get("humidity", 70.0) / 100  # normalize 0–1
-            wind_speed = weather_data.get("wind_speed", 10.0)
-            symptom_count = len(processed_text.split())
+            numeric_raw = np.array([[age, temp_c, humidity, wind_kmh, symptom_count]], dtype=np.float32)
+            numeric_scaled = self.scaler.transform(numeric_raw)
 
-            numeric_features = np.array(
-                [[age, temp_c, humidity, wind_speed, symptom_count]],
-                dtype=np.float32
-            )
+            binary = np.zeros((1, TOTAL_BINARY_FEATURES), dtype=np.float32)
+            tokens = set(symptoms_std.split())
+            for i, s in enumerate(SYMPTOM_COLUMNS):
+                binary[0, i] = 1.0 if s in tokens else 0.0
+            binary[0, -1] = float(gender)
 
-            # Scale numeric features
-            X_numeric_scaled = self.scaler.transform(numeric_features)
+            X_numeric = np.hstack([numeric_scaled, binary]).astype(np.float32)
+            X_text = self.text_vectorizer([symptoms_std])
 
-            # Vectorize text
-            X_text_seq = self.text_vectorizer(np.array([processed_text])).numpy()
+            probs = self.model.predict({'numeric_input': X_numeric, 'text_input': X_text}, verbose=0)[0]
+            idx = int(np.argmax(probs))
+            confidence = float(probs[idx])
+            disease = self.label_encoder.inverse_transform([idx])[0]
 
-            # Predict
-            predictions = self.model.predict(
-                {"numeric_input": X_numeric_scaled, "text_input": X_text_seq},
-                verbose=0
-            )
-
-            predicted_idx = np.argmax(predictions, axis=1)[0]
-            predicted_label = self.label_encoder.inverse_transform([predicted_idx])[0]
-            confidence = float(np.max(predictions))
-
-            # Top-5 probabilities
-            class_probs = predictions[0]
-            top5 = sorted(
-                zip(self.label_encoder.classes_, class_probs),
-                key=lambda x: x[1],
-                reverse=True
-            )[:5]
+            top5_idx = np.argsort(probs)[-5:][::-1]
+            top5 = [
+                {"disease": self.label_encoder.inverse_transform([i])[0], "confidence": f"{float(p):.4f}"}
+                for i, p in zip(top5_idx, probs[top5_idx])
+            ]
 
             return {
-                "prediction": predicted_label,
-                "confidence": confidence,
-                "top_5": [{label: float(prob)} for label, prob in top5],
-                "raw_weather_data": {k: float(v) for k, v in weather_data.items() if isinstance(v, (int, float))},
-                "status": "Success",
-                "note": user_text,
-                "city": city,
+                "prediction": disease,
+                "confidence": f"{confidence:.4f}",
+                "top_5": top5,
+                "debug": {
+                    "age": age,
+                    "gender": "male" if gender else "female",
+                    "city": city,
+                    "temp_c": temp_c,
+                    "humidity": humidity,
+                    "wind_kmh": wind_kmh,
+                    "symptom_count": symptom_count,
+                    "symptom_std": symptoms_std
+                },
+                "status": "Success"
             }
 
         except Exception as e:
-            logger.error(f"DL prediction failed: {e}", exc_info=True)
-            return {"error": str(e), "status": "Error", "prediction": "N/A"}
+            logger.error(f"Prediction failed: {e}", exc_info=True)
+            return {"error": str(e), "status": "Error"}
+
+
+# SELF-TEST (manual run)
+if __name__ == "__main__":
+    load_dotenv()
+    api_key = os.getenv("OPENWEATHERMAP_API_KEY")
+    if not api_key:
+        raise ValueError("Set OPENWEATHERMAP_API_KEY in .env file")
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    service = DLService(api_key)
+
+    print("\nDL Service Evaluation (Web-Ready)")
+    print("=" * 60)
+
+    cases = [
+        {"true": "Common Cold", "input": "Age 26, Gender: Female from Mumbai, symptoms: fever, headache, body pain"},
+        {"true": "Common Cold", "input": "Age 55 male, city Delhi, I have sore throat and cough"},
+        {"true": "Migraine", "input": "Age 40 male from Delhi, symptoms: severe throbbing headache, pain behind the eyes, vomiting"},
+        {"true": "Stroke", "input": "Age 70 female from San Francisco, I'm experiencing sudden numbness on one side, trouble speaking, blurred vision"}
+    ]
+
+    correct = 0
+    for i, case in enumerate(cases, 1):
+        result = asyncio.run(service.predict(case["input"]))
+        if result["status"] == "Error":
+            print(f"Test {i}: ERROR → {result['error']}")
+            continue
+        pred, conf = result["prediction"], result["confidence"]
+        passed = pred == case["true"]
+        print(f"Test {i}: {case['input'][:70]}...")
+        print(f"  → {pred} ({conf}) → {'PASSED' if passed else f'FAILED (exp: {case['true']})'}\n")
+        if passed:
+            correct += 1
+
+    acc = (correct / len(cases)) * 100
+    print(f"Final Accuracy: {acc:.2f}% ({correct}/{len(cases)} correct)")
+    print("=" * 60)
