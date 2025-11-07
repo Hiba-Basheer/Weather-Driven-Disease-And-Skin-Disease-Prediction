@@ -4,53 +4,74 @@ name: CI/CD → GCP Cloud Run
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'RAGentWeb/**'
-  workflow_dispatch: # allows manual trigger from GitHub Actions UI
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  
 
 jobs:
+  # 1 Code Quality Checks
   quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install linters
+          python-version: "3.12"
+
+      - name: Install Linters
         run: pip install ruff black mypy bandit isort
-      - name: Install project deps
+
+      - name: Install Project Dependencies
         run: pip install -r requirements.txt
-      - name: Run Ruff
+
+      - name: Run Ruff (Lint)
         run: ruff check src/ tests/
-      - name: Run Black
+
+      - name: Run Black (Format Check)
         run: black --check src/ tests/
-      - name: Run isort
+
+      - name: Run isort (Import Sort Check)
         run: isort --check-only src/ tests/
-      - name: Run mypy
+
+      - name: Run mypy (Type Check)
         run: mypy src/
-      - name: Run Bandit
+
+      - name: Run Bandit (Security Scan)
         run: bandit -r src/
 
+  # 2 Run Automated Tests
   test:
+    name: Run Tests
     needs: quality
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install test deps
+          python-version: "3.12"
+
+      - name: Install Test Dependencies
         run: pip install pytest pytest-asyncio fastapi[all] pillow
-      - name: Run tests
+
+      - name: Run Tests
         run: pytest -vv --asyncio-mode=auto
 
+  # 3 Deploy to GCP Cloud Run
   deploy:
+    name: Deploy to Cloud Run
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -60,23 +81,30 @@ jobs:
     permissions:
       contents: read
       id-token: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIP }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
+
       - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
+
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
       - name: Build and Push Docker Image
         run: |
           IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
           docker build -t "$IMAGE" -f Dockerfile .
           docker push "$IMAGE"
           echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy rag-web \
