@@ -1,48 +1,52 @@
 # .github/workflows/ci-cd.yml
-name: CI/CD → GCP Cloud Run
+name: CI/CD to GCP Cloud Run
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'RAGentWeb/**'
-  workflow_dispatch:    # allows manual trigger from GitHub Actions UI
+  workflow_dispatch:    
+Actions UI
 
 jobs:
-  # 1. Code Quality checks
+  # 1️⃣ Code Quality checks
   quality:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Install linters
         run: pip install ruff black mypy bandit isort
 
-      - name: Install project deps
+      - name: Install project dependencies
         run: pip install -r requirements.txt
 
-      - name: Run Ruff
+      - name: Run Ruff (Lint)
         run: ruff check src/ tests/
 
-      - name: Run Black
+      - name: Run Black (Format check)
         run: black --check src/ tests/
 
-      - name: Run isort
+      - name: Run isort (Import order check)
         run: isort --check-only src/ tests/
 
-      - name: Run mypy
+      - name: Run mypy (Type checking)
         run: mypy src/
 
-      - name: Run Bandit
+      - name: Run Bandit (Security checks)
         run: bandit -r src/
 
-  # 2. Run tests
+  # 2️⃣ Run tests
   test:
     needs: quality
     runs-on: ubuntu-latest
@@ -50,18 +54,22 @@ jobs:
       run:
         working-directory: ./RAGentWeb
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install test deps
+      - name: Install test dependencies
         run: pip install pytest pytest-asyncio fastapi[all] pillow
 
       - name: Run tests
         run: pytest -vv --asyncio-mode=auto
 
-  # 3. Deploy to GCP Cloud Run
+  # 3️⃣
+ Deploy to GCP Cloud Run
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -74,7 +82,8 @@ jobs:
       id-token: write  
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v2
