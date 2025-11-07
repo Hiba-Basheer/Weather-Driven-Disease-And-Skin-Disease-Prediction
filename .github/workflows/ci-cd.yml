@@ -1,0 +1,79 @@
+# .github/workflows/ci-cd.yml
+name: CI/CD → GCP Cloud Run
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'RAGentWeb/**'
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./RAGentWeb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install ruff black mypy bandit
+      - run: pip install -r requirements.txt
+      - run: ruff check src/ tests/
+      - run: black --check src/ tests/
+      - run: pip install isort && isort --check-only src/ tests/
+      - run: mypy src/
+      - run: bandit -r src/
+
+  test:
+    needs: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./RAGentWeb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install pytest pytest-asyncio fastapi[all] pillow
+      - run: mkdir -p models/dl && touch models/dl/dummy
+      - run: pytest -vv --asyncio-mode=auto
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./RAGentWeb
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync trained models
+        run: python scripts/sync_models.py
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIP }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+
+      - run: |
+          IMAGE=asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/ragentweb-repo/ragentweb:latest
+          docker build -t $IMAGE -f Dockerfile .
+          docker push $IMAGE
+
+      - run: |
+          gcloud run deploy ragentweb \
+            --image $IMAGE \
+            --platform managed \
+            --region asia-south1 \
+            --allow-unauthenticated \
+            --port 8000 \
+            --set-env-vars OPENWEATHERMAP_API_KEY=${{ secrets.OPENWEATHERMAP_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+            --quiet
