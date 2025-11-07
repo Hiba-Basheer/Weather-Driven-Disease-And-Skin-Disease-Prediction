@@ -6,9 +6,10 @@ on:
     branches: [ main ]
     paths:
       - 'RAGentWeb/**'
-  pull_request:
+  workflow_dispatch:    # allows manual trigger from GitHub Actions UI
 
 jobs:
+  # 1. Code Quality checks
   quality:
     runs-on: ubuntu-latest
     defaults:
@@ -19,14 +20,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install ruff black mypy bandit isort
-      - run: pip install -r requirements.txt
-      - run: ruff check src/ tests/
-      - run: black --check src/ tests/
-      - run: isort --check-only src/ tests/
-      - run: mypy src/
-      - run: bandit -r src/
 
+      - name: Install linters
+        run: pip install ruff black mypy bandit isort
+
+      - name: Install project deps
+        run: pip install -r requirements.txt
+
+      - name: Run Ruff
+        run: ruff check src/ tests/
+
+      - name: Run Black
+        run: black --check src/ tests/
+
+      - name: Run isort
+        run: isort --check-only src/ tests/
+
+      - name: Run mypy
+        run: mypy src/
+
+      - name: Run Bandit
+        run: bandit -r src/
+
+  # 2. Run tests
   test:
     needs: quality
     runs-on: ubuntu-latest
@@ -38,9 +54,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pytest pytest-asyncio fastapi[all] pillow
-      - run: pytest -vv --asyncio-mode=auto
 
+      - name: Install test deps
+        run: pip install pytest pytest-asyncio fastapi[all] pillow
+
+      - name: Run tests
+        run: pytest -vv --asyncio-mode=auto
+
+  # 3. Deploy to GCP Cloud Run
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
@@ -50,24 +71,24 @@ jobs:
         working-directory: ./RAGentWeb
     permissions:
       contents: read
-      id-token: write
+      id-token: write  
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (WIF)
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIP }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
 
-      - name: Setup gcloud
+      - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker
+      - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
-      - name: Build & push image
+      - name: Build and Push Docker Image
         run: |
           IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
           docker build -t "$IMAGE" -f Dockerfile .
