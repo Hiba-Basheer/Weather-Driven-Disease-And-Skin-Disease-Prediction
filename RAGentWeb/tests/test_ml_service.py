@@ -3,7 +3,6 @@ from unittest.mock import Mock, patch
 import joblib
 import numpy as np
 import pytest
-
 from src.ml_service import MLService
 
 

@@ -5,9 +5,8 @@ import joblib
 import numpy as np
 import pytest
 import tensorflow as tf
-from tensorflow.keras import layers
-
 from src.dl_service import DLService
+from tensorflow.keras import layers
 
 
 @pytest.fixture

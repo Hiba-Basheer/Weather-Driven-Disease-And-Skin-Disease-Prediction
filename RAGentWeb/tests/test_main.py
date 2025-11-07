@@ -15,7 +15,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
-
 from src.main import app, startup_event
 
 # Global FastAPI test client
