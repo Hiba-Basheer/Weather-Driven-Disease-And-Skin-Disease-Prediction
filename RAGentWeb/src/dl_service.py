@@ -245,7 +245,9 @@ class DLService:
                 age = 30.0
 
             gender = 1 if re.search(r"\bmale\b", raw, re.I) else 0
-            city_match = re.search(r"(?:from|city|living in)\s*([a-zA-Z\s]+)", raw, re.I)
+            city_match = re.search(
+                r"(?:from|city|living in)\s*([a-zA-Z\s]+)", raw, re.I
+            )
             city = city_match.group(1).strip() if city_match else "Unknown"
 
             symptom_match = re.search(

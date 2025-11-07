@@ -105,12 +105,8 @@ class MLService:
             symptoms_str = str(user_input.get("symptoms", ""))
 
             weather_data = await fetch_and_log_weather_data(
-                city_str,
-                self.api_key,
-                symptoms_str,
-                service_type="ML"
+                city_str, self.api_key, symptoms_str, service_type="ML"
             )
-
 
             # Weather fetch failed
             if "error" in weather_data:
