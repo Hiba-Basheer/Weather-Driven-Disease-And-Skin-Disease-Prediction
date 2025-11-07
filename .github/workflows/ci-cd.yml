@@ -17,12 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
-      - run: pip install ruff black mypy bandit
+        with:
+          python-version: '3.12'
+      - run: pip install ruff black mypy bandit isort
       - run: pip install -r requirements.txt
       - run: ruff check src/ tests/
       - run: black --check src/ tests/
-      - run: pip install isort && isort --check-only src/ tests/
+      - run: isort --check-only src/ tests/
       - run: mypy src/
       - run: bandit -r src/
 
@@ -35,9 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: '3.12' }
+        with:
+          python-version: '3.12'
       - run: pip install pytest pytest-asyncio fastapi[all] pillow
-      - run: mkdir -p models/dl && touch models/dl/dummy
       - run: pytest -vv --asyncio-mode=auto
 
   deploy:
@@ -50,27 +51,32 @@ jobs:
     permissions:
       contents: read
       id-token: write
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Sync trained models
-        run: python scripts/sync_models.py
-
+      # Authenticate with GCP via Workload Identity Federation
       - uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WIP }}
-          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          workload_identity_provider: "projects/43780674799/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "github-deployer@western-plate-475306-m0.iam.gserviceaccount.com"
 
-      - run: gcloud auth configure-docker asia-south1-docker.pkg.dev
+      # Set up Google Cloud SDK
+      - uses: google-github-actions/setup-gcloud@v2
 
+      # Configure Docker for Artifact Registry
+      - run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      # Build and push Docker image to Artifact Registry
       - run: |
-          IMAGE=asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/ragentweb-repo/ragentweb:latest
-          docker build -t $IMAGE -f Dockerfile .
-          docker push $IMAGE
+          IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:latest"
+          docker build -t "$IMAGE" -f Dockerfile .
+          docker push "$IMAGE"
 
+      # Deploy to Cloud Run
       - run: |
-          gcloud run deploy ragentweb \
-            --image $IMAGE \
+          gcloud run deploy rag-web \
+            --image "$IMAGE" \
             --platform managed \
             --region asia-south1 \
             --allow-unauthenticated \
