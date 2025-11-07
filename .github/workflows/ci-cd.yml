@@ -7,10 +7,10 @@ on:
     paths:
       - 'RAGentWeb/**'
   workflow_dispatch:    
-Actions UI
+
 
 jobs:
-  # 1️⃣ Code Quality checks
+  # 1️ Code Quality checks
   quality:
     runs-on: ubuntu-latest
     defaults:
@@ -46,7 +46,7 @@ jobs:
       - name: Run Bandit (Security checks)
         run: bandit -r src/
 
-  # 2️⃣ Run tests
+  # 2️ Run tests
   test:
     needs: quality
     runs-on: ubuntu-latest
@@ -68,8 +68,7 @@ jobs:
       - name: Run tests
         run: pytest -vv --asyncio-mode=auto
 
-  # 3️⃣
- Deploy to GCP Cloud Run
+  # 3️ Deploy to GCP Cloud Run
   deploy:
     needs: test
     if: github.ref == 'refs/heads/main'
