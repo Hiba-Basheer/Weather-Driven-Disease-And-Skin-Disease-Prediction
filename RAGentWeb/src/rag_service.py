@@ -7,14 +7,15 @@ Integrates:
   • Groq LLM for response generation
 """
 
-import os
 import logging
+import os
 from pathlib import Path
+
 from dotenv import load_dotenv
-from langchain_groq import ChatGroq
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
+from langchain_community.vectorstores import FAISS
+from langchain_groq import ChatGroq
+from langchain_huggingface import HuggingFaceEmbeddings
 
 logger = logging.getLogger("RAGService")
 
@@ -44,7 +45,7 @@ class RAGService:
             self.vectorstore = FAISS.load_local(
                 folder_path=db_path,
                 embeddings=self.embeddings,
-                allow_dangerous_deserialization=True
+                allow_dangerous_deserialization=True,
             )
             logger.info(f"FAISS vector store loaded from: {db_path}")
 
@@ -59,17 +60,16 @@ class RAGService:
             self.llm = ChatGroq(
                 groq_api_key=groq_api_key,
                 model_name="llama-3.1-8b-instant",
-                temperature=0.1
+                temperature=0.1,
             )
             logger.info("Groq LLM initialized successfully.")
 
             # RAG chain
             self.chain = ConversationalRetrievalChain.from_llm(
-                llm=self.llm,
-                retriever=self.retriever
+                llm=self.llm, retriever=self.retriever
             )
 
-            self.chat_history = []
+            self.chat_history: list[tuple[str, str]] = []
             logger.info("RAGService initialized successfully.")
 
         except Exception as e:
@@ -87,13 +87,15 @@ class RAGService:
             dict: A dictionary with the generated answer and source details.
         """
         try:
-            response = self.chain.invoke({"question": query, "chat_history": self.chat_history})
+            response = self.chain.invoke(
+                {"question": query, "chat_history": self.chat_history}
+            )
             self.chat_history.append((query, response["answer"]))
             self.chat_history = self.chat_history[-5:]  # keep last 5 exchanges
 
             return {
                 "answer": response["answer"],
-                "sources": "Data retrieved from FAISS index using HuggingFace embeddings and Groq LLM."
+                "sources": "Data retrieved from FAISS index using HuggingFace embeddings and Groq LLM.",
             }
 
         except Exception as e:
@@ -101,7 +103,7 @@ class RAGService:
             return {"answer": "Error processing query.", "sources": str(e)}
 
 
-# Evaluation 
+# Evaluation
 if __name__ == "__main__":
     """
     Evaluate RAGService on health-related questions.
@@ -111,7 +113,9 @@ if __name__ == "__main__":
     """
     import time
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     BASE_DIR = Path(__file__).resolve().parent.parent
     FAISS_PATH = BASE_DIR / "data" / "vector_store" / "faiss_index"
@@ -123,10 +127,22 @@ if __name__ == "__main__":
         exit(1)
 
     test_cases = [
-        ("What are the common symptoms of dengue fever?", ["fever", "headache", "joint pain", "rash"]),
-        ("What are the symptoms of malaria?", ["fever", "chills", "sweating", "headache", "fatigue"]),
-        ("What are the symptoms of heart attack?", ["chest pain", "shortness of breath", "nausea"]),
-        ("what should I do if I have eczema??", ["Consult a doctor", "Keep your skin moisturized", "Avoid triggers"]),
+        (
+            "What are the common symptoms of dengue fever?",
+            ["fever", "headache", "joint pain", "rash"],
+        ),
+        (
+            "What are the symptoms of malaria?",
+            ["fever", "chills", "sweating", "headache", "fatigue"],
+        ),
+        (
+            "What are the symptoms of heart attack?",
+            ["chest pain", "shortness of breath", "nausea"],
+        ),
+        (
+            "what should I do if I have eczema??",
+            ["Consult a doctor", "Keep your skin moisturized", "Avoid triggers"],
+        ),
     ]
 
     correct = 0

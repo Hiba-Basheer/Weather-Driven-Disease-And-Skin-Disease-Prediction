@@ -11,15 +11,22 @@ Provides unified endpoints for:
 All services are loaded on startup and exposed through REST endpoints.
 """
 
-import os
 import logging
-from fastapi import FastAPI, Request, File, UploadFile, HTTPException
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-from dotenv import load_dotenv
-from pathlib import Path
+
+from .dl_service import DLService
+from .image_service import ImageClassificationService
+# Service imports
+from .ml_service import MLService
+from .rag_service import RAGService
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -27,7 +34,7 @@ logger = logging.getLogger("RAGentWeb_API")
 
 # Environment setup
 load_dotenv()
-OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY")
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHERMAP_API_KEY") or ""
 if not OPENWEATHER_API_KEY:
     logger.error("OPENWEATHERMAP_API_KEY not found in environment variables!")
 
@@ -39,21 +46,17 @@ app = FastAPI(title="Health AI Predictor & RAGent Web API")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Service imports
-from .ml_service import MLService
-from .dl_service import DLService
-from .image_service import ImageClassificationService
-from .rag_service import RAGService
-
 # Global service instances
 ml_service: MLService | None = None
 dl_service: DLService | None = None
 image_service: ImageClassificationService | None = None
 rag_service: RAGService | None = None
 
+
 # Pydantic request models
 class MLPredictionRequest(BaseModel):
     """Request schema for ML-based prediction."""
+
     age: int
     gender: str
     city: str
@@ -62,12 +65,15 @@ class MLPredictionRequest(BaseModel):
 
 class DLPredictionRequest(BaseModel):
     """Request schema for DL-based text prediction."""
+
     note: str
 
 
 class RAGQueryRequest(BaseModel):
     """Request schema for RAG-based question answering."""
+
     query: str
+
 
 # Startup event: load all models/services
 @app.on_event("startup")
@@ -86,7 +92,7 @@ async def startup_event() -> None:
 
     logger.info("Application starting up — loading AI models and services...")
 
-    # ML Service 
+    # ML Service
     try:
         ml_model_dir = BASE_DIR / "models" / "ml"
         if not ml_model_dir.exists():
@@ -96,7 +102,7 @@ async def startup_event() -> None:
     except Exception as e:
         logger.error(f"Error initializing ML Service: {e}")
 
-    # DL Service 
+    # DL Service
     try:
         dl_service = DLService(OPENWEATHER_API_KEY)
         logger.info("DL Service initialized successfully.")
@@ -122,11 +128,13 @@ async def startup_event() -> None:
 
     logger.info("All service initialization attempts complete.\n")
 
+
 # Frontend route
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend(request: Request):
     """Serves the main frontend page (index.html)."""
     return templates.TemplateResponse("index.html", {"request": request})
+
 
 # API Endpoints
 @app.post("/api/predict_ml")
@@ -135,12 +143,14 @@ async def predict_ml_endpoint(payload: MLPredictionRequest):
     if not ml_service:
         raise HTTPException(status_code=503, detail="ML Service not available.")
     try:
-        result = await ml_service.predict({
-            "age": payload.age,
-            "gender": payload.gender,
-            "city": payload.city,
-            "symptoms": payload.symptoms
-        })
+        result = await ml_service.predict(
+            {
+                "age": payload.age,
+                "gender": payload.gender,
+                "city": payload.city,
+                "symptoms": payload.symptoms,
+            }
+        )
         return result
     except Exception as e:
         logger.error(f"ML Prediction Error: {e}")
@@ -164,7 +174,9 @@ async def predict_dl_endpoint(payload: DLPredictionRequest):
 async def classify_image_endpoint(file: UploadFile = File(...)):
     """Classifies an uploaded image using the CNN-based skin disease model."""
     if not image_service:
-        raise HTTPException(status_code=503, detail="Image Classification Service not available.")
+        raise HTTPException(
+            status_code=503, detail="Image Classification Service not available."
+        )
     try:
         image_bytes = await file.read()
         result = image_service.classify(image_bytes)
@@ -202,8 +214,8 @@ async def health_check():
             "ml": ml_service is not None,
             "dl": dl_service is not None,
             "image": image_service is not None,
-            "rag": rag_service is not None
+            "rag": rag_service is not None,
         },
-        "message": "RAGentWeb API is running and all services are loaded."
+        "message": "RAGentWeb API is running and all services are loaded.",
     }
     return JSONResponse(content=status)

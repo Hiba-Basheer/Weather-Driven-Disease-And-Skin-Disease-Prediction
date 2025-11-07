@@ -1,5 +1,7 @@
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import patch, Mock
+
 from src.rag_service import RAGService
 
 
@@ -20,7 +22,9 @@ def mock_rag_components():
             mock_llm_instance = Mock()
             mock_llm.return_value = mock_llm_instance
 
-            with patch("src.rag_service.ConversationalRetrievalChain.from_llm") as mock_chain:
+            with patch(
+                "src.rag_service.ConversationalRetrievalChain.from_llm"
+            ) as mock_chain:
                 mock_chain_instance = Mock()
                 mock_chain_instance.invoke.return_value = {"answer": "Test answer"}
                 mock_chain.return_value = mock_chain_instance

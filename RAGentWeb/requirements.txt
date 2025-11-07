@@ -1,7 +1,7 @@
 # Core
 fastapi==0.119.0
 uvicorn==0.37.0
-python-multipart==0.0.20    # ADD THIS LINE
+python-multipart==0.0.20    
 
 # ML/DL
 tensorflow-cpu==2.16.2
@@ -34,3 +34,10 @@ requests==2.32.5
 tqdm==4.67.1
 coloredlogs==15.0.1
 rich==14.2.0
+
+# Dev / CI
+ruff
+black
+isort
+mypy
+bandit

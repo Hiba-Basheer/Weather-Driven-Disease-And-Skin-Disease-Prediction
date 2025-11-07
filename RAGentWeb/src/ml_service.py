@@ -7,11 +7,13 @@ to predict diseases from structured user inputs (age, gender, city, symptoms),
 enriched with live weather data fetched from OpenWeatherMap.
 """
 
-import os
-import joblib
 import logging
-import pandas as pd
+import os
+
+import joblib
 import numpy as np
+import pandas as pd
+
 from .weather_fetcher import fetch_and_log_weather_data
 
 logger = logging.getLogger("MLService")
@@ -63,10 +65,14 @@ class MLService:
         # Load expected feature names
         features_path = os.path.join(model_dir, self.FEATURE_NAMES_FILE)
         if not os.path.exists(features_path):
-            raise FileNotFoundError(f"Expected features file not found at {features_path}")
+            raise FileNotFoundError(
+                f"Expected features file not found at {features_path}"
+            )
         self.expected_features = joblib.load(features_path)
 
-        logger.info(f"Model, encoder, and expected features loaded successfully from {model_dir}")
+        logger.info(
+            f"Model, encoder, and expected features loaded successfully from {model_dir}"
+        )
 
     async def predict(self, user_input: dict) -> dict:
         """
@@ -95,20 +101,23 @@ class MLService:
             if self.api_key is None:
                 raise ValueError("OpenWeatherMap API key not set for weather fetching.")
 
-            # Fetch live weather
+            city_str = str(city or "Unknown")
+            symptoms_str = str(user_input.get("symptoms", ""))
+
             weather_data = await fetch_and_log_weather_data(
-                city,
+                city_str,
                 self.api_key,
-                user_input.get("symptoms"),
+                symptoms_str,
                 service_type="ML"
             )
 
+
             # Weather fetch failed
-            if 'error' in weather_data:
+            if "error" in weather_data:
                 return {
-                    "error": weather_data['error'],
+                    "error": weather_data["error"],
                     "prediction": "N/A",
-                    "status": "Failed to retrieve weather data."
+                    "status": "Failed to retrieve weather data.",
                 }
 
             # Prepare feature dictionary initialized to zero
@@ -121,7 +130,9 @@ class MLService:
             features_dict["Wind Speed (km/h)"] = weather_data.get("wind_speed", 5)
 
             # Map symptoms to feature columns
-            user_symptoms = [s.strip().lower() for s in user_input.get("symptoms", "").split(",")]
+            user_symptoms = [
+                s.strip().lower() for s in user_input.get("symptoms", "").split(",")
+            ]
             for symptom in user_symptoms:
                 if symptom in features_dict:
                     features_dict[symptom] = 1
@@ -138,23 +149,25 @@ class MLService:
             X_input = df_final.values
             pred_proba = self.model.predict_proba(X_input)[0]
             pred_class_index = np.argmax(pred_proba)
-            predicted_label = self.label_encoder.inverse_transform([pred_class_index])[0]
+            predicted_label = self.label_encoder.inverse_transform([pred_class_index])[
+                0
+            ]
 
             return {
                 "prediction": predicted_label,
                 "confidence": float(np.max(pred_proba)),
-                "raw_weather_data": {k: float(v) for k, v in weather_data.items() if isinstance(v, (int, float))},
+                "raw_weather_data": {
+                    k: float(v)
+                    for k, v in weather_data.items()
+                    if isinstance(v, (int, float))
+                },
                 "status": "Success",
-                "user_info": user_input
+                "user_info": user_input,
             }
 
         except Exception as e:
             logger.error(f"ML prediction error: {e}")
-            return {
-                "error": str(e),
-                "prediction": "N/A",
-                "status": "Error"
-            }
+            return {"error": str(e), "prediction": "N/A", "status": "Error"}
 
 
 # EVALUATION BLOCK
@@ -177,6 +190,7 @@ if __name__ == "__main__":
       - Reports total accuracy across test set
     """
     import asyncio
+
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -184,16 +198,58 @@ if __name__ == "__main__":
     if not api_key:
         raise ValueError("OPENWEATHERMAP_API_KEY not found")
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     service = MLService(api_key=api_key)
 
     test_cases = [
-        ({"age": 35, "gender": "male", "city": "Calicut", "symptoms": "high_fever, joint_pain, pain_behind_the_eyes"}, "Dengue"),        
-        ({"age": 25, "gender": "female", "city": "Kochi", "symptoms": "high_fever, chills, headache, shivering"}, "Malaria"),
-        ({"age": 28, "gender": "female", "city": "Bangalore", "symptoms": "cough, runny_nose, headache, fatigue"}, "Common Cold"),
-        ({"age": 45, "gender": "male", "city": "Chennai", "symptoms": "chest_pain, dizziness, vomiting, nausea"}, "Heart Attack"),        
-        ({"age": 30, "gender": "female", "city": "Delhi", "symptoms": "headache, nausea, dizziness"}, "Migraine"),
+        (
+            {
+                "age": 35,
+                "gender": "male",
+                "city": "Calicut",
+                "symptoms": "high_fever, joint_pain, pain_behind_the_eyes",
+            },
+            "Dengue",
+        ),
+        (
+            {
+                "age": 25,
+                "gender": "female",
+                "city": "Kochi",
+                "symptoms": "high_fever, chills, headache, shivering",
+            },
+            "Malaria",
+        ),
+        (
+            {
+                "age": 28,
+                "gender": "female",
+                "city": "Bangalore",
+                "symptoms": "cough, runny_nose, headache, fatigue",
+            },
+            "Common Cold",
+        ),
+        (
+            {
+                "age": 45,
+                "gender": "male",
+                "city": "Chennai",
+                "symptoms": "chest_pain, dizziness, vomiting, nausea",
+            },
+            "Heart Attack",
+        ),
+        (
+            {
+                "age": 30,
+                "gender": "female",
+                "city": "Delhi",
+                "symptoms": "headache, nausea, dizziness",
+            },
+            "Migraine",
+        ),
     ]
 
     correct = 0

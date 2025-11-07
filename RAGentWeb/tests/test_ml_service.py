@@ -1,7 +1,9 @@
-import pytest
+from unittest.mock import Mock, patch
+
 import joblib
 import numpy as np
-from unittest.mock import patch, Mock
+import pytest
+
 from src.ml_service import MLService
 
 
@@ -35,7 +37,7 @@ def mock_model_files(tmp_path):
         "Wind Speed (km/h)",
         "fever",
         "headache",
-        "gender"
+        "gender",
     ]
     joblib.dump(features, features_path)
 
@@ -49,11 +51,7 @@ async def test_ml_predict(mock_fetch_weather, mock_model_files):
     Ensures the prediction result structure and values are correct.
     """
     # Mock weather data response
-    mock_fetch_weather.return_value = {
-        "temp": 25.0,
-        "humidity": 70,
-        "wind_speed": 5.0
-    }
+    mock_fetch_weather.return_value = {"temp": 25.0, "humidity": 70, "wind_speed": 5.0}
 
     # Initialize MLService with mock model directory
     service = MLService(model_dir=mock_model_files, api_key="fake_key")
@@ -63,7 +61,7 @@ async def test_ml_predict(mock_fetch_weather, mock_model_files):
         "age": 30,
         "gender": "male",
         "city": "TestCity",
-        "symptoms": "fever,headache"
+        "symptoms": "fever,headache",
     }
 
     # Perform prediction

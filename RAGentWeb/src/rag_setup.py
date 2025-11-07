@@ -5,13 +5,14 @@ Loads text documents, splits them into chunks, embeds them using
 HuggingFace sentence transformers, and stores them in FAISS format.
 """
 
-import os
 import logging
+import os
 from pathlib import Path
+
 from dotenv import load_dotenv
-from langchain_community.vectorstores import FAISS
 from langchain.docstore.document import Document
 from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
 # Environment and paths
@@ -26,10 +27,10 @@ FAISS_PATH = BASE_DIR / "data" / "vector_store" / "faiss_index"
 
 # Logging configuration
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("RAGVectorBuilder")
+
 
 # Document loading
 def load_documents(data_dirs: list[Path]) -> list[Document]:
@@ -51,7 +52,12 @@ def load_documents(data_dirs: list[Path]) -> list[Document]:
                     with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read().strip()
                     if content:
-                        all_documents.append(Document(page_content=content, metadata={"source": str(file_path)}))
+                        all_documents.append(
+                            Document(
+                                page_content=content,
+                                metadata={"source": str(file_path)},
+                            )
+                        )
                 except Exception as e:
                     logger.warning(f"Error reading {file_path}: {e}")
 
@@ -60,6 +66,7 @@ def load_documents(data_dirs: list[Path]) -> list[Document]:
     else:
         logger.info(f"Loaded {len(all_documents)} documents successfully.")
     return all_documents
+
 
 # Text splitting
 def split_text(documents: list[Document]) -> list[Document]:
@@ -70,14 +77,11 @@ def split_text(documents: list[Document]) -> list[Document]:
         logger.warning("No documents to split.")
         return []
 
-    splitter = CharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
-        separator="\n"
-    )
+    splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50, separator="\n")
     chunks = splitter.split_documents(documents)
     logger.info(f"Split into {len(chunks)} text chunks.")
     return chunks
+
 
 # Vector DB building
 def build_vector_db():
@@ -113,6 +117,7 @@ def build_vector_db():
     FAISS_PATH.parent.mkdir(parents=True, exist_ok=True)
     vectordb.save_local(str(FAISS_PATH))
     logger.info(f"FAISS index built and saved successfully at {FAISS_PATH}")
+
 
 # Entry point
 if __name__ == "__main__":

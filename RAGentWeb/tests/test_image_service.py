@@ -1,8 +1,10 @@
 import io
-import pytest
+from unittest.mock import Mock, patch
+
 import numpy as np
+import pytest
 from PIL import Image
-from unittest.mock import patch, Mock
+
 from src.image_service import ImageClassificationService
 
 

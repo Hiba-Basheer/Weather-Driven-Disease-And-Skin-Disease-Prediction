@@ -1,10 +1,12 @@
 import json
+from unittest.mock import Mock, patch
+
 import joblib
-import pytest
 import numpy as np
+import pytest
 import tensorflow as tf
-from unittest.mock import patch, Mock
 from tensorflow.keras import layers
+
 from src.dl_service import DLService
 
 
@@ -36,7 +38,9 @@ def mock_model_files(tmp_path):
     # Mock label encoder
     label_encoder = Mock()
     label_encoder.classes_ = np.array([f"disease_{i}" for i in range(10)])
-    label_encoder.inverse_transform.side_effect = lambda idx: np.array([f"disease_{idx[0]}"])
+    label_encoder.inverse_transform.side_effect = lambda idx: np.array(
+        [f"disease_{idx[0]}"]
+    )
     joblib.dump(label_encoder, model_dir / "label_encoder.pkl")
 
     # Mock text vectorizer config
@@ -75,7 +79,7 @@ async def test_dl_predict(mock_get, mock_model_files):
     mock_response = Mock()
     mock_response.json.return_value = {
         "main": {"temp": 25.0, "humidity": 70},
-        "wind": {"speed": 5.0}
+        "wind": {"speed": 5.0},
     }
     mock_get.return_value = mock_response
 

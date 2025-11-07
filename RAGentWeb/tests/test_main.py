@@ -7,15 +7,16 @@ Covers:
 - Application startup and service loading
 - api endpoint behaviors
 - Health check route
-- Error handling 
+- Error handling
 - Root HTML serving
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from fastapi.testclient import TestClient
-from src.main import app, startup_event
+from unittest.mock import MagicMock
 
+import pytest
+from fastapi.testclient import TestClient
+
+from src.main import app, startup_event
 
 # Global FastAPI test client
 client = TestClient(app)
@@ -47,11 +48,14 @@ def mock_service_imports(monkeypatch):
     # Patch service classes in main.py
     monkeypatch.setattr("src.main.MLService", lambda *a, **k: mock_ml)
     monkeypatch.setattr("src.main.DLService", lambda *a, **k: mock_dl)
-    monkeypatch.setattr("src.main.ImageClassificationService", lambda *a, **k: mock_image)
+    monkeypatch.setattr(
+        "src.main.ImageClassificationService", lambda *a, **k: mock_image
+    )
     monkeypatch.setattr("src.main.RAGService", lambda *a, **k: mock_rag)
 
     # Inject mocks into global variables
     from src import main
+
     main.ml_service = mock_ml
     main.dl_service = mock_dl
     main.image_service = mock_image
@@ -63,6 +67,7 @@ def mock_service_imports(monkeypatch):
 def run_startup():
     """Force the FastAPI startup event to initialize mocked services."""
     import asyncio
+
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     loop.run_until_complete(startup_event())
@@ -113,6 +118,7 @@ def test_predict_dl_endpoint():
 def test_classify_image_endpoint():
     """Test /api/classify_image with an uploaded dummy image."""
     from io import BytesIO
+
     from PIL import Image
 
     image = Image.new("RGB", (50, 50), color="red")
@@ -144,10 +150,11 @@ def test_rag_chat_endpoint():
     assert "sources" in result
 
 
-# Error Handling 
+# Error Handling
 def test_ml_service_unavailable(monkeypatch):
     """Ensure 503 is returned if ML service is missing."""
     from src import main
+
     main.ml_service = None  # Simulate missing service
 
     payload = {"age": 30, "gender": "female", "city": "Delhi", "symptoms": "cough"}

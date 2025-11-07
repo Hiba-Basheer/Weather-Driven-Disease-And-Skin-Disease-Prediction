@@ -3,9 +3,10 @@ weather_fetcher.py
 Asynchronous weather data retriever for ML and DL services using OpenWeatherMap API.
 """
 
-import os
-import httpx
 import logging
+import os
+
+import httpx
 from dotenv import load_dotenv
 
 # Environment setup
@@ -13,13 +14,15 @@ load_dotenv()
 
 # Logging configuration
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("WeatherFetcher")
 
+
 # Weather fetch function
-async def fetch_and_log_weather_data(city: str, api_key: str, note: str, service_type: str) -> dict:
+async def fetch_and_log_weather_data(
+    city: str, api_key: str, note: str, service_type: str
+) -> dict:
     """
     Fetches weather data asynchronously from OpenWeatherMap API using httpx.
 
@@ -67,15 +70,21 @@ async def fetch_and_log_weather_data(city: str, api_key: str, note: str, service
             error_detail = e.response.json().get("message", str(e))
         except Exception:
             error_detail = str(e)
-        logger.error(f"{service_type} - HTTP error fetching weather for {city}: {error_detail}")
-        return {"error": f"Failed to fetch weather data for {city}. Detail: {error_detail}"}
+        logger.error(
+            f"{service_type} - HTTP error fetching weather for {city}: {error_detail}"
+        )
+        return {
+            "error": f"Failed to fetch weather data for {city}. Detail: {error_detail}"
+        }
 
     except httpx.RequestError as e:
         logger.error(f"{service_type} - Network error fetching weather for {city}: {e}")
         return {"error": f"Network error while fetching weather: {e}"}
 
     except Exception as e:
-        logger.exception(f"{service_type} - Unexpected error while fetching weather for {city}: {e}")
+        logger.exception(
+            f"{service_type} - Unexpected error while fetching weather for {city}: {e}"
+        )
         return {"error": f"Unexpected error: {e}"}
 
 
