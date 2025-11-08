@@ -1,13 +1,13 @@
 import json
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import joblib
 import numpy as np
 import pytest
 import tensorflow as tf
-from tensorflow.keras import layers
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from src.dl_service import DLService
+from tensorflow.keras import layers
 
 
 @pytest.fixture

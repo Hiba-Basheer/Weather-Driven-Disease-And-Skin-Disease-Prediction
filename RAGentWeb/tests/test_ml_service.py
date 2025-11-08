@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import joblib
 import pytest
-from unittest.mock import patch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 from src.ml_service import MLService

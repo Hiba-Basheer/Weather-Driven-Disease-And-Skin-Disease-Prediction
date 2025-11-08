@@ -1,7 +1,8 @@
 # RAGentWeb/tests/test_main.py
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, MagicMock
 from src.main import app, startup_event
 
 
@@ -91,6 +92,7 @@ async def test_predict_dl_endpoint(async_client):
 @pytest.mark.asyncio
 async def test_classify_image_endpoint(async_client):
     from io import BytesIO
+
     from PIL import Image
 
     image = Image.new("RGB", (50, 50), color="red")
