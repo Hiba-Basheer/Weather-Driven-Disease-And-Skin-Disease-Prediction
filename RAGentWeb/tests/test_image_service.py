@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock, mock_open
 import numpy as np
 from src.image_service import ImageClassificationService
 
+
 @patch("os.path.exists", return_value=True)
 @patch("tensorflow.keras.models.load_model")
 @patch("builtins.open", new_callable=mock_open, read_data="label1\nlabel2")
@@ -11,6 +12,7 @@ def test_image_service_init(mock_file, mock_load_model, mock_exists):
     assert service.model is not None
     assert hasattr(service, "labels")
     assert service.labels == ["label1", "label2"]
+
 
 @patch("os.path.exists", return_value=True)
 @patch("tensorflow.keras.models.load_model")
