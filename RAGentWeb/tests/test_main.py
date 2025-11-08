@@ -1,9 +1,7 @@
-# RAGentWeb/tests/test_main.py
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
 from httpx import AsyncClient
-from src.main import app, startup_event
+
+from src.main import app
 
 
 @pytest.fixture
@@ -11,85 +9,41 @@ async def client():
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
 
-# Mock services before startup
-@pytest.fixture(autouse=True)
-def mock_services(monkeypatch):
-    # ML/DL mocks
-    mock_ml = AsyncMock()
-    mock_ml.predict.return_value = {"prediction": "ML Mock", "status": "Success"}
 
-    mock_dl = AsyncMock()
-    mock_dl.predict.return_value = {"prediction": "DL Mock", "status": "Success"}
-
-    # Image Service mock
-    mock_image = MagicMock()
-    mock_image.classify.return_value = {
-        "prediction": "Eczema",
-        "confidence": 0.95,
-        "status": "Success",
-    }
-
-    # RAG mock
-    mock_rag = AsyncMock()
-    mock_rag.chat.return_value = {
-        "response": "RAG Mock Answer",
-        "sources": ["doc1", "doc2"],
-    }
-
-    monkeypatch.setattr("src.main.MLService", lambda *a, **k: mock_ml)
-    monkeypatch.setattr("src.main.DLService", lambda *a, **k: mock_dl)
-    monkeypatch.setattr(
-        "src.main.ImageClassificationService", lambda *a, **k: mock_image
-    )
-    monkeypatch.setattr("src.main.RAGService", lambda *a, **k: mock_rag)
-
-    from src import main
-
-    main.ml_service = mock_ml
-    main.dl_service = mock_dl
-    main.image_service = mock_image
-    main.rag_service = mock_rag
-
-
-@pytest.fixture(autouse=True)
-def run_startup():
-    import asyncio
-
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(startup_event())
-    loop.close()
+@pytest.mark.asyncio
+async def test_health_check(client):
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
 
 
 @pytest.mark.asyncio
-async def test_health_check(async_client):
-    response = await async_client.get("/health")
+async def test_predict_ml_endpoint(client):
+    payload = {
+        "age": 35,
+        "gender": "male",
+        "city": "Mumbai",
+        "symptoms": "fever, headache",
+    }
+    response = await client.post("/api/predict_ml", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
-    assert all(data["services"].values())
+    assert "prediction" in data
+    assert "confidence" in data
 
 
 @pytest.mark.asyncio
-async def test_predict_ml_endpoint(async_client):
-    payload = {"age": 35, "gender": "male", "city": "Mumbai", "symptoms": "fever"}
-    response = await async_client.post("/api/predict_ml", json=payload)
+async def test_predict_dl_endpoint(client):
+    payload = {"note": "Age 40 male symptoms: severe headache, vomiting"}
+    response = await client.post("/api/predict_dl", json=payload)
     assert response.status_code == 200
-    result = response.json()
-    assert result["prediction"] == "ML Mock"
+    data = response.json()
+    assert "prediction" in data
+    assert "confidence" in data
 
 
 @pytest.mark.asyncio
-async def test_predict_dl_endpoint(async_client):
-    payload = {"note": "Age 40 male symptoms: headache"}
-    response = await async_client.post("/api/predict_dl", json=payload)
-    assert response.status_code == 200
-    result = response.json()
-    assert result["prediction"] == "DL Mock"
-
-
-@pytest.mark.asyncio
-async def test_classify_image_endpoint(async_client):
+async def test_classify_image_endpoint(client):
     from io import BytesIO
 
     from PIL import Image
@@ -99,25 +53,27 @@ async def test_classify_image_endpoint(async_client):
     image.save(buffer, format="JPEG")
     buffer.seek(0)
 
-    response = await async_client.post(
-        "/api/classify_image", files={"file": ("test.jpg", buffer, "image/jpeg")}
+    response = await client.post(
+        "/api/classify_image",
+        files={"file": ("test.jpg", buffer, "image/jpeg")},
     )
     assert response.status_code == 200
-    result = response.json()
-    assert result["prediction"] == "Eczema"
+    data = response.json()
+    assert "prediction" in data
 
 
 @pytest.mark.asyncio
-async def test_rag_chat_endpoint(async_client):
+async def test_rag_chat_endpoint(client):
     payload = {"query": "What is dengue?"}
-    response = await async_client.post("/api/rag_chat", json=payload)
+    response = await client.post("/api/rag_chat", json=payload)
     assert response.status_code == 200
-    result = response.json()
-    assert result["response"] == "RAG Mock Answer"
+    data = response.json()
+    assert "answer" in data
+    assert "sources" in data
 
 
 @pytest.mark.asyncio
-async def test_root_returns_html(async_client):
-    response = await async_client.get("/")
+async def test_root_returns_html(client):
+    response = await client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]

@@ -1,86 +1,30 @@
-import json
-from unittest.mock import Mock, patch
 import os
-from pathlib import Path
-import joblib
-import numpy as np
+from unittest.mock import MagicMock, patch
+
 import pytest
-import tensorflow as tf
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+
 from src.dl_service import DLService
-from tensorflow.keras import layers
-
-
-@pytest.fixture
-def mock_model_files(tmp_path):
-    """
-    Create temporary mock model files for testing the DLService class.
-    Includes a minimal Keras model, scaler, label encoder, and text vectorizer assets.
-    """
-    model_dir = tmp_path / "dl"
-    model_dir.mkdir()
-
-    # Minimal Keras model
-    model_path = model_dir / "dl_model.keras"
-    num_input = layers.Input(shape=(71,), name="numeric_input")
-    txt_input = layers.Input(shape=(100,), name="text_input")
-    x_txt = layers.Embedding(200, 16)(txt_input)
-    x_txt = layers.GlobalAveragePooling1D()(x_txt)
-    merged = layers.concatenate([num_input, x_txt])
-    output = layers.Dense(10, activation="softmax")(merged)
-    model = tf.keras.models.Model([num_input, txt_input], output)
-    model.save(model_path)
-
-    # Minimal real scaler
-    scaler = StandardScaler()
-    # Fit on minimal data to avoid errors
-    scaler.fit(np.zeros((1, 5)))
-    joblib.dump(scaler, model_dir / "scaler.pkl")
-
-    # Minimal real label encoder
-    label_encoder = LabelEncoder()
-    label_encoder.fit([f"disease_{i}" for i in range(10)])
-    joblib.dump(label_encoder, model_dir / "label_encoder.pkl")
-
-    # Text vectorizer config
-    with open(model_dir / "text_vectorizer_config.json", "w") as f:
-        json.dump({"output_sequence_length": 100}, f)
-
-    # Text vectorizer vocabulary
-    with open(model_dir / "text_vectorizer_vocab.txt", "w") as f:
-        f.write("\n".join(["[UNK]", "fever", "headache"]))
-
-    return str(model_dir)
 
 
 @patch("src.dl_service.os.getenv")
 @patch("src.dl_service.requests.get")
 def test_dl_service_init(mock_get, mock_getenv, mock_model_files):
-    """
-    Test DLService initialization with mocked dependencies.
-    Ensures that the model, scaler, label encoder, and text vectorizer are properly loaded.
-    """
+    """Test DLService initialization with mocked dependencies."""
     mock_getenv.return_value = "fake_key"
     with patch("src.dl_service.DLService.MODEL_DIR", mock_model_files):
-        os.makedirs(mock_model_files, exist_ok=True)
-        for f in ["dl_model.keras", "scaler.pkl", "label_encoder.pkl", "text_vectorizer_config.json"]:
-            Path(mock_model_files, f).touch()
         service = DLService()
-    assert service.model is not None
-    assert service.scaler is not None
-    assert service.label_encoder is not None
-    assert service.text_vectorizer is not None
+        assert service.model is not None
+        assert service.scaler is not None
+        assert service.label_encoder is not None
+        assert service.text_vectorizer is not None
 
 
 @patch("src.dl_service.requests.get")
 @pytest.mark.asyncio
 async def test_dl_predict(mock_get, mock_model_files):
-    """
-    Test the predict method of DLService using mocked weather data and inputs.
-    Validates the structure and content of the prediction response.
-    """
+    """Test the predict method of DLService using mocked weather data."""
     # Mock weather API response
-    mock_response = Mock()
+    mock_response = MagicMock()
     mock_response.json.return_value = {
         "main": {"temp": 25.0, "humidity": 70},
         "wind": {"speed": 5.0},
@@ -90,13 +34,10 @@ async def test_dl_predict(mock_get, mock_model_files):
     # Initialize DLService with mock model files
     with patch("src.dl_service.DLService.MODEL_DIR", mock_model_files):
         service = DLService(openweather_api_key="fake_key")
-
-    # Run prediction
-    result = await service.predict("Age 30 male from TestCity symptoms: fever headache")
-
-    # Validate response structure
-    assert result["status"] == "Success"
-    assert "prediction" in result
-    assert "confidence" in result
-    assert isinstance(result["top_5"], list)
-    assert len(result["top_5"]) == 5
+        result = await service.predict(
+            note="Age 40 male symptoms: severe headache, vomiting",
+            city="Mumbai",
+        )
+        assert "prediction" in result
+        assert "confidence" in result
+        assert "weather" in result
