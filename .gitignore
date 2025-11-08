@@ -79,7 +79,6 @@ plots/
 *.svg
 
 # FastAPI static / templates cache
-static/
 templates/__pycache__/
 
 # IDE / OS / Notebook files
