@@ -16,7 +16,6 @@ async def test_health_check(client):
     assert response.status_code == 200
 
 
-
 @pytest.mark.asyncio
 async def test_predict_ml_endpoint(client):
     payload = {
