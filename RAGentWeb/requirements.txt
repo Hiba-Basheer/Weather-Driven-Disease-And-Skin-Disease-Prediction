@@ -41,3 +41,5 @@ black
 isort
 mypy
 bandit
+
+httpx

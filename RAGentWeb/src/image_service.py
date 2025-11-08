@@ -60,7 +60,7 @@ class ImageClassificationService:
             self.labels = [line.strip() for line in f if line.strip()]
 
         logger.info(
-            f"Image Classification Model loaded with {len(self.class_labels)} classes."
+            f"Image Classification Model loaded with {len(self.labels)} classes."
         )
 
     def _preprocess_image(self, image_bytes: bytes) -> np.ndarray:
