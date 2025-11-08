@@ -1,7 +1,7 @@
 # RAGentWeb/tests/test_main.py
 import pytest
 from httpx import AsyncClient
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from src.main import app, startup_event
 
 @pytest.fixture

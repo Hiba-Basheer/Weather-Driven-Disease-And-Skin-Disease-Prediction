@@ -1,5 +1,4 @@
 # RAGentWeb/tests/test_image_service.py
-import pytest
 from unittest.mock import patch, MagicMock, mock_open
 import numpy as np
 from src.image_service import ImageClassificationService

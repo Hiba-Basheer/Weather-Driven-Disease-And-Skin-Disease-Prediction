@@ -1,5 +1,4 @@
 import joblib
-import numpy as np
 import pytest
 from unittest.mock import patch
 from sklearn.ensemble import RandomForestClassifier
