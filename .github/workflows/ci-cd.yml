@@ -54,6 +54,8 @@ jobs:
     defaults:
       run:
         working-directory: ./RAGentWeb
+    env:
+      PYTHONPATH: ./src
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
