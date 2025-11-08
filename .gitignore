@@ -81,6 +81,10 @@ plots/
 # FastAPI static / templates cache
 templates/__pycache__/
 
+# Allow static folder to be committed
+!RAGentWeb/RAGentWeb/static/
+!RAGentWeb/RAGentWeb/static/.gitkeep
+
 # IDE / OS / Notebook files
 .DS_Store
 Thumbs.db
