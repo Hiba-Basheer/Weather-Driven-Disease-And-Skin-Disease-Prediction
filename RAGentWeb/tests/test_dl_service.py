@@ -1,12 +1,13 @@
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import patch, Mock
 
 import joblib
 import numpy as np
 import pytest
 import tensorflow as tf
-from src.dl_service import DLService
 from tensorflow.keras import layers
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from src.dl_service import DLService
 
 
 @pytest.fixture
@@ -18,7 +19,7 @@ def mock_model_files(tmp_path):
     model_dir = tmp_path / "dl"
     model_dir.mkdir()
 
-    # Mock Keras model
+    # Minimal Keras model
     model_path = model_dir / "dl_model.keras"
     num_input = layers.Input(shape=(71,), name="numeric_input")
     txt_input = layers.Input(shape=(100,), name="text_input")
@@ -29,24 +30,22 @@ def mock_model_files(tmp_path):
     model = tf.keras.models.Model([num_input, txt_input], output)
     model.save(model_path)
 
-    # Mock scaler
-    scaler = Mock()
-    scaler.transform.return_value = np.zeros((1, 5))
+    # Minimal real scaler
+    scaler = StandardScaler()
+    # Fit on minimal data to avoid errors
+    scaler.fit(np.zeros((1, 5)))
     joblib.dump(scaler, model_dir / "scaler.pkl")
 
-    # Mock label encoder
-    label_encoder = Mock()
-    label_encoder.classes_ = np.array([f"disease_{i}" for i in range(10)])
-    label_encoder.inverse_transform.side_effect = lambda idx: np.array(
-        [f"disease_{idx[0]}"]
-    )
+    # Minimal real label encoder
+    label_encoder = LabelEncoder()
+    label_encoder.fit([f"disease_{i}" for i in range(10)])
     joblib.dump(label_encoder, model_dir / "label_encoder.pkl")
 
-    # Mock text vectorizer config
+    # Text vectorizer config
     with open(model_dir / "text_vectorizer_config.json", "w") as f:
         json.dump({"output_sequence_length": 100}, f)
 
-    # Mock vocabulary file
+    # Text vectorizer vocabulary
     with open(model_dir / "text_vectorizer_vocab.txt", "w") as f:
         f.write("\n".join(["[UNK]", "fever", "headache"]))
 
@@ -61,7 +60,8 @@ def test_dl_service_init(mock_get, mock_getenv, mock_model_files):
     Ensures that the model, scaler, label encoder, and text vectorizer are properly loaded.
     """
     mock_getenv.return_value = "fake_key"
-    service = DLService()
+    with patch("src.dl_service.DLService.MODEL_DIR", mock_model_files):
+        service = DLService()
     assert service.model is not None
     assert service.scaler is not None
     assert service.label_encoder is not None
@@ -69,6 +69,7 @@ def test_dl_service_init(mock_get, mock_getenv, mock_model_files):
 
 
 @patch("src.dl_service.requests.get")
+@pytest.mark.asyncio
 async def test_dl_predict(mock_get, mock_model_files):
     """
     Test the predict method of DLService using mocked weather data and inputs.
