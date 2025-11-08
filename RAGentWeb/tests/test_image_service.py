@@ -27,7 +27,9 @@ def test_image_classify(mock_file, mock_load_model, mock_exists):
 
     # Create real JPEG bytes
     from io import BytesIO
+
     from PIL import Image
+
     img = Image.new("RGB", (224, 224), color="red")
     buffer = BytesIO()
     img.save(buffer, format="JPEG")

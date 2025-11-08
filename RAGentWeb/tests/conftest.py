@@ -1,8 +1,10 @@
 # RAGentWeb/tests/conftest.py
 import os
-import pytest
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
+
 
 @pytest.fixture
 def fake_models(tmp_path: Path):
@@ -33,6 +35,7 @@ def fake_models(tmp_path: Path):
     # Set env var for services
     os.environ["MODEL_ROOT"] = str(models_dir)
     return models_dir
+
 
 @pytest.fixture(autouse=True)
 def patch_dl_validation():
