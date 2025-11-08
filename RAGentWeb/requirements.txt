@@ -43,3 +43,4 @@ mypy
 bandit
 
 httpx
+pytest-asyncio
