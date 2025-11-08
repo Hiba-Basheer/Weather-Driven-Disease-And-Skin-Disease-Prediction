@@ -57,7 +57,7 @@ class ImageClassificationService:
 
         # Load class labels
         with open(labels_path, "r") as f:
-            self.class_labels = [line.strip() for line in f if line.strip()]
+            self.labels = [line.strip() for line in f if line.strip()]
 
         logger.info(
             f"Image Classification Model loaded with {len(self.class_labels)} classes."

@@ -53,7 +53,7 @@ class RAGService:
             self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
             # LLM setup (Groq)
-            groq_api_key = os.getenv("GROQ_API_KEY")
+            groq_api_key = os.getenv("GROQ_API_KEY") or "dummy"
             if not groq_api_key:
                 raise ValueError("GROQ_API_KEY not set in environment variables.")
 

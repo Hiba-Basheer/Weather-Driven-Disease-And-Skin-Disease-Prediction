@@ -5,10 +5,11 @@ import pytest
 from src.rag_service import RAGService
 
 
+@patch("os.getenv", return_value="fake_key")
 @patch("src.rag_service.FAISS.load_local", return_value=MagicMock())
 @patch("src.rag_service.ConversationalRetrievalChain")
 @pytest.mark.asyncio
-async def test_rag_chat(mock_chain_class, mock_faiss):
+async def test_rag_chat(mock_chain_class, mock_faiss, mock_getenv):
     # Mock async chain
     mock_chain_instance = AsyncMock()
     mock_chain_instance.invoke = AsyncMock(

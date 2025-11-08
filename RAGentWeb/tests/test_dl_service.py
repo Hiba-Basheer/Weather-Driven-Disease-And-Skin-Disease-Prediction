@@ -1,6 +1,7 @@
 import json
 from unittest.mock import Mock, patch
-
+import os
+from pathlib import Path
 import joblib
 import numpy as np
 import pytest
@@ -61,6 +62,9 @@ def test_dl_service_init(mock_get, mock_getenv, mock_model_files):
     """
     mock_getenv.return_value = "fake_key"
     with patch("src.dl_service.DLService.MODEL_DIR", mock_model_files):
+        os.makedirs(mock_model_files, exist_ok=True)
+        for f in ["dl_model.keras", "scaler.pkl", "label_encoder.pkl", "text_vectorizer_config.json"]:
+            Path(mock_model_files, f).touch()
         service = DLService()
     assert service.model is not None
     assert service.scaler is not None

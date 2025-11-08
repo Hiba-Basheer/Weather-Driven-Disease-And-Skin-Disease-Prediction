@@ -2,15 +2,14 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from src.main import app, startup_event
 
 
 @pytest.fixture
-async def async_client():
-    async with AsyncClient(app=app, base_url="http://testserver") as client:
-        yield client
-
+async def client():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
 
 # Mock services before startup
 @pytest.fixture(autouse=True)
