@@ -2,7 +2,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import AsyncClient
 from src.main import app, startup_event
 
 

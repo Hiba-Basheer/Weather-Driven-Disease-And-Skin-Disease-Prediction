@@ -1,8 +1,6 @@
 # RAGentWeb/tests/conftest.py
 import pytest
-from unittest.mock import Mock, MagicMock
 import os
-from pathlib import Path
 
 # Fake model folder for DL & Image tests
 @pytest.fixture
