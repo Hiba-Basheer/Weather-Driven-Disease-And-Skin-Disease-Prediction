@@ -1,6 +1,6 @@
 # RAGentWeb/tests/test_main.py
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from httpx import ASGITransport, AsyncClient
 from src.main import app
 
