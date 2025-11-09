@@ -1,9 +1,11 @@
 # RAGentWeb/tests/conftest.py
 import os
-import pytest
+import zipfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import zipfile
+
+import pytest
+
 
 @pytest.fixture
 def fake_models(tmp_path: Path):
@@ -17,9 +19,9 @@ def fake_models(tmp_path: Path):
 
     # DL: Create valid .keras ZIP
     dl_model_path = dl_dir / "dl_model.keras"
-    with zipfile.ZipFile(dl_model_path, 'w') as zf:
+    with zipfile.ZipFile(dl_model_path, "w") as zf:
         zf.writestr("config.json", '{"class_name": "Model"}')
-        zf.writestr("model.weights.bin", b'\x00' * 100)
+        zf.writestr("model.weights.bin", b"\x00" * 100)
 
     (dl_dir / "scaler.pkl").touch()
     (dl_dir / "label_encoder.pkl").touch()
@@ -38,9 +40,15 @@ def fake_models(tmp_path: Path):
     os.environ["MODEL_ROOT"] = str(models_dir)
     return models_dir
 
+
 @pytest.fixture(autouse=True)
 def mock_loaders():
-    with patch("tensorflow.keras.models.load_model", return_value=MagicMock(input_shape=(1, 224, 224, 3))), \
-         patch("src.rag_service.HuggingFaceEmbeddings", return_value=MagicMock()), \
-         patch("src.rag_service.FAISS.load_local", return_value=MagicMock()):
+    with (
+        patch(
+            "tensorflow.keras.models.load_model",
+            return_value=MagicMock(input_shape=(1, 224, 224, 3)),
+        ),
+        patch("src.rag_service.HuggingFaceEmbeddings", return_value=MagicMock()),
+        patch("src.rag_service.FAISS.load_local", return_value=MagicMock()),
+    ):
         yield

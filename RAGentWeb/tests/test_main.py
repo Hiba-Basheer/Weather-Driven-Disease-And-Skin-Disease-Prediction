@@ -7,8 +7,10 @@ from src.main import app
 @pytest.fixture
 async def client():
     # Create the client
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        # Manually trigger FastAPI startup 
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        # Manually trigger FastAPI startup
         await ac.app.router.startup()
         yield ac
         await ac.app.router.shutdown()
@@ -48,6 +50,7 @@ async def test_predict_dl_endpoint(client):
 @pytest.mark.asyncio
 async def test_classify_image_endpoint(client):
     from io import BytesIO
+
     from PIL import Image
 
     image = Image.new("RGB", (50, 50), color="red")

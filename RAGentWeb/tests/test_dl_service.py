@@ -1,15 +1,21 @@
+from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import joblib
 import pytest
 from src.dl_service import DLService
-import joblib
-from pathlib import Path
+
 
 @pytest.fixture(autouse=True)
 def create_fake_scaler(fake_models: Path):
     scaler_path = fake_models / "dl" / "scaler.pkl"
     scaler_path.parent.mkdir(parents=True, exist_ok=True)
-    fake_scaler = lambda X: X  # identity
+
+    def fake_scaler(X):
+        return X
+
     joblib.dump(fake_scaler, scaler_path)
+
 
 @patch("src.dl_service.os.getenv")
 @patch("src.dl_service.requests.get")

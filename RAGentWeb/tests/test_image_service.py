@@ -1,7 +1,9 @@
 # RAGentWeb/tests/test_image_service.py
+import io
 from unittest.mock import MagicMock, mock_open, patch
 
 import numpy as np
+from PIL import Image
 from src.image_service import ImageClassificationService
 
 
@@ -25,7 +27,6 @@ def test_image_classify(mock_file, mock_load_model, mock_exists):
     mock_model.predict.return_value = np.array([[0.1, 0.9]])
     mock_model.input_shape = (1, 224, 224, 3)
     mock_load_model.return_value = mock_model
-
 
     img = Image.new("RGB", (224, 224), color="red")
     buffer = io.BytesIO()
