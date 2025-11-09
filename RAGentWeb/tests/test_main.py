@@ -6,11 +6,13 @@ from src.main import app
 
 @pytest.fixture
 async def client():
+    # MOCK ALL SERVICES IN app.state
     app.state.dl_service = MagicMock()
     app.state.ml_service = MagicMock()
     app.state.image_service = MagicMock()
     app.state.rag_service = MagicMock()
 
+    # Return proper dicts
     app.state.dl_service.predict.return_value = {"prediction": "Flu", "confidence": 0.95}
     app.state.ml_service.predict.return_value = {"prediction": "Flu", "confidence": 0.95}
     app.state.image_service.classify.return_value = {"prediction": "Eczema", "confidence": 0.88}

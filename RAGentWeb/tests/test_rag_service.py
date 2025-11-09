@@ -8,7 +8,7 @@ from src.rag_service import RAGService
 def test_rag_chat(mock_chain_class, mock_faiss, mock_getenv):
     mock_chain = MagicMock()
     mock_chain.invoke.return_value = {
-        "answer": "Dengue is a viral infection.",
+        "answer": "Dengue is a viral disease.",
         "source_documents": [
             MagicMock(metadata={"source": "doc1"}),
             MagicMock(metadata={"source": "doc2"})
@@ -19,5 +19,5 @@ def test_rag_chat(mock_chain_class, mock_faiss, mock_getenv):
     service = RAGService(db_path="/fake")
     result = service.chat("What is dengue?")
 
-    assert result["answer"] == "Dengue is a viral infection."
-    assert result["sources"] == ["doc1", "doc2"]
+    assert result["answer"] == "Dengue is a viral disease."
+    assert result["sources"] == ["doc1", "doc2"]  # sources is a list

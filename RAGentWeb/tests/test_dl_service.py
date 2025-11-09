@@ -21,7 +21,6 @@ def fake_models(tmp_path: Path):
 
     for f in ["scaler.pkl", "label_encoder.pkl"]:
         (dl_dir / f).touch()
-
     (dl_dir / "text_vectorizer_config.json").write_text("{}")
     (dl_dir / "text_vectorizer_vocab.txt").write_text("")
 
@@ -31,13 +30,15 @@ def fake_models(tmp_path: Path):
 @patch("src.dl_service.requests.get")
 @patch("src.dl_service.tf.keras.models.load_model")
 @patch("src.dl_service.joblib.load")
-def test_dl_service_init(mock_joblib, mock_load_model, mock_get, fake_models):
+def test_dl_service_init(mock_joblib, mock_load_model, mock_requests, fake_models):
     mock_load_model.return_value = MagicMock()
     mock_joblib.return_value = MagicMock()
 
+    # FIX: Mock response with .json() and .ok
     mock_resp = MagicMock()
-    mock_resp.json.return_value = {"main": {"temp": 25.0}}
-    mock_get.return_value = mock_resp
+    mock_resp.ok = True
+    mock_resp.json.return_value = {"main": {"temp": 25.0, "humidity": 60}}
+    mock_requests.return_value = mock_resp
 
     service = DLService("fake_key")
     assert service.model is not None
@@ -46,13 +47,18 @@ def test_dl_service_init(mock_joblib, mock_load_model, mock_get, fake_models):
 @patch("src.dl_service.tf.keras.models.load_model")
 @patch("src.dl_service.joblib.load")
 @pytest.mark.asyncio
-async def test_dl_predict(mock_joblib, mock_load_model, mock_get, fake_models):
+async def test_dl_predict(mock_joblib, mock_load_model, mock_requests, fake_models):
     mock_load_model.return_value = MagicMock()
     mock_joblib.return_value = MagicMock()
+
+    mock_resp = MagicMock()
+    mock_resp.ok = True
+    mock_resp.json.return_value = {"main": {"temp": 25.0}}
+    mock_requests.return_value = mock_resp
 
     service = DLService("fake_key")
     service.model.predict = MagicMock(return_value=np.array([[0.1, 0.9]]))
     service.label_encoder.classes_ = np.array(["Flu", "Cold"])
 
-    result = await service.predict("fever")
+    result = await service.predict("fever cough")
     assert result["prediction"] == "Cold"
