@@ -57,7 +57,7 @@ class ImageClassificationService:
 
         # Load class labels
         with open(labels_path, "r") as f:
-            self.class_labels = [line.strip() for line in f if line.strip()]
+            self.labels = [line.strip() for line in f if line.strip()]
 
         logger.info(
             f"Image Classification Model loaded with {len(self.labels)} classes."
@@ -109,7 +109,7 @@ class ImageClassificationService:
             predictions = self.model.predict(input_tensor)[0]
 
             # Sanity check: output dimension should match label count
-            if len(predictions) != len(self.class_labels):
+            if len(predictions) != len(self.labels):
                 return {
                     "error": "Mismatch between model outputs and class labels.",
                     "prediction": "N/A",
@@ -119,7 +119,7 @@ class ImageClassificationService:
             # Compute top-3 predictions
             top_indices = np.argsort(predictions)[::-1][:3]
             top_predictions = [
-                {"label": self.class_labels[i], "confidence": float(predictions[i])}
+                {"label": self.labels[i], "confidence": float(predictions[i])}
                 for i in top_indices
             ]
             predicted_label = top_predictions[0]["label"]
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     # CONFIGURATION
     MODEL_PATH = r"D:\brototype\week27\RAGentWeb\models\resnet_model.h5"
-    LABELS_PATH = r"D:\brototype\week27\RAGentWeb\models\class_labels.txt"
+    LABELS_PATH = r"D:\brototype\week27\RAGentWeb\models\labels.txt"
 
     if not Path(MODEL_PATH).exists():
         raise FileNotFoundError(f"Model not found: {MODEL_PATH}")

@@ -1,4 +1,5 @@
 # RAGentWeb/tests/conftest.py 
+import os
 import pytest
 from pathlib import Path
 import zipfile

@@ -1,6 +1,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-
+import os
 import joblib
 import pytest
 from src.dl_service import DLService
