@@ -1,14 +1,23 @@
 # RAGentWeb/tests/test_main.py
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 from httpx import ASGITransport, AsyncClient
 from src.main import app
 
 @pytest.fixture
 async def client():
+    app.state.dl_service = MagicMock()
+    app.state.ml_service = MagicMock()
+    app.state.image_service = MagicMock()
+    app.state.rag_service = MagicMock()
+
+    app.state.dl_service.predict = AsyncMock(return_value={"prediction": "Flu", "confidence": 0.95})
+    app.state.ml_service.predict = MagicMock(return_value={"prediction": "Flu", "confidence": 0.95})
+    app.state.image_service.classify = MagicMock(return_value={"prediction": "Eczema", "confidence": 0.88})
+    app.state.rag_service.chat = MagicMock(return_value={"answer": "Dengue info", "sources": ["doc1"]})
+
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        await app.router.startup()  
         yield ac
-        await app.router.shutdown()
 
 
 
