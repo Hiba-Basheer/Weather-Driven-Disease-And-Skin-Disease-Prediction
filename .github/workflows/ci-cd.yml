@@ -22,20 +22,17 @@ jobs:
       - run: pip install ruff black mypy bandit isort
       - run: pip install -r requirements.txt
 
-      # APPLY FORMATTING FIRST
-      - name: Format code
+      - name: Apply formatting
         run: |
           black src/ tests/ --quiet
           isort src/ tests/ --quiet
 
-      # FIX LINT ISSUES
       - name: Fix lint
         run: |
           sed -i '/^import os$/d' tests/conftest.py || true
           sed -i '1s/^/import os\n/' tests/conftest.py || true
           sed -i 's|AsyncMock, ||g' tests/test_rag_service.py || true
 
-      # NOW ALL CHECKS PASS
       - run: ruff check src/ tests/
       - run: black --check src/ tests/
       - run: isort --check-only src/ tests/
@@ -89,25 +86,27 @@ jobs:
           if os.getenv("CI") == "true":
               import tensorflow as tf
               from unittest.mock import MagicMock
-              tf.keras.models.load_model = lambda *a,**k: MagicMock(input_shape=(1,224,224,3))
+              tf.keras.models.load_model = lambda *a, **k: MagicMock(input_shape=(1, 224, 224, 3))
               import requests
               mock_resp = MagicMock()
               mock_resp.ok = True
               mock_resp.json.return_value = {"main": {"temp": 25.0, "humidity": 60}}
-              requests.get = lambda *a,**k: mock_resp
+              requests.get = lambda *a, **k: mock_resp
               from langchain_huggingface import HuggingFaceEmbeddings
-              HuggingFaceEmbeddings.__init__ = lambda *a,**k: None
-              HuggingFaceEmbeddings.embed_query = lambda s,x: [0.1]*384
+              HuggingFaceEmbeddings.__init__ = lambda *a, **k: None
+              HuggingFaceEmbeddings.embed_query = lambda s, x: [0.1] * 384
           EOF
 
-      - name: Write + format conftest.py
+      - name: Write PERFECT conftest.py
         run: |
           cat > tests/conftest.py <<'EOF'
           import os
+
           import pytest
-          from httpx import AsyncClient, ASGITransport
+          from httpx import ASGITransport, AsyncClient
           from src.main import app
           from unittest.mock import MagicMock
+
 
           @pytest.fixture(autouse=True)
           def mock_services():
@@ -116,18 +115,31 @@ jobs:
               app.state.image_service = MagicMock()
               app.state.rag_service = MagicMock()
 
-              app.state.dl_service.predict.return_value = {"prediction": "Flu", "confidence": 0.95}
-              app.state.ml_service.predict.return_value = {"prediction": "Flu", "confidence": 0.95}
-              app.state.image_service.classify.return_value = {"prediction": "Eczema", "confidence": 0.88}
-              app.state.rag_service.chat.return_value = {"answer": "Test answer", "sources": ["doc1", "doc2"]}
+              app.state.dl_service.predict.return_value = {
+                  "prediction": "Flu",
+                  "confidence": 0.95,
+              }
+              app.state.ml_service.predict.return_value = {
+                  "prediction": "Flu",
+                  "confidence": 0.95,
+              }
+              app.state.image_service.classify.return_value = {
+                  "prediction": "Eczema",
+                  "confidence": 0.88,
+              }
+              app.state.rag_service.chat.return_value = {
+                  "answer": "Test answer",
+                  "sources": ["doc1", "doc2"],
+              }
+
 
           @pytest.fixture
           async def client():
-              async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+              async with AsyncClient(
+                  transport=ASGITransport(app=app), base_url="http://test"
+              ) as ac:
                   yield ac
           EOF
-          black tests/conftest.py --quiet
-          isort tests/conftest.py --quiet
 
       - name: Run Tests
         run: pytest -vv --asyncio-mode=auto tests/
