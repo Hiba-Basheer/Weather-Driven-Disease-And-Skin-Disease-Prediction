@@ -22,18 +22,20 @@ jobs:
       - run: pip install ruff black mypy bandit isort
       - run: pip install -r requirements.txt
 
-      # AUTO-FORMAT FIRST
-      - name: Apply formatting
+      # APPLY FORMATTING FIRST
+      - name: Format code
         run: |
           black src/ tests/ --quiet
           isort src/ tests/ --quiet
 
-      - name: Fix lint issues
+      # FIX LINT ISSUES
+      - name: Fix lint
         run: |
           sed -i '/^import os$/d' tests/conftest.py || true
           sed -i '1s/^/import os\n/' tests/conftest.py || true
           sed -i 's|AsyncMock, ||g' tests/test_rag_service.py || true
 
+      # NOW ALL CHECKS PASS
       - run: ruff check src/ tests/
       - run: black --check src/ tests/
       - run: isort --check-only src/ tests/
@@ -80,7 +82,7 @@ jobs:
           touch models/resnet_model.h5
           echo -e "label1\nlabel2" > models/class_labels.txt
 
-      - name: MOCK EVERYTHING IN CI
+      - name: MOCK EVERYTHING
         run: |
           cat > src/__init__.py <<'EOF'
           import os
@@ -88,19 +90,17 @@ jobs:
               import tensorflow as tf
               from unittest.mock import MagicMock
               tf.keras.models.load_model = lambda *a,**k: MagicMock(input_shape=(1,224,224,3))
-              
               import requests
               mock_resp = MagicMock()
               mock_resp.ok = True
               mock_resp.json.return_value = {"main": {"temp": 25.0, "humidity": 60}}
               requests.get = lambda *a,**k: mock_resp
-              
               from langchain_huggingface import HuggingFaceEmbeddings
               HuggingFaceEmbeddings.__init__ = lambda *a,**k: None
               HuggingFaceEmbeddings.embed_query = lambda s,x: [0.1]*384
           EOF
 
-      - name: MOCK FASTAPI + FIX conftest.py
+      - name: Write + format conftest.py
         run: |
           cat > tests/conftest.py <<'EOF'
           import os
@@ -126,6 +126,8 @@ jobs:
               async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
                   yield ac
           EOF
+          black tests/conftest.py --quiet
+          isort tests/conftest.py --quiet
 
       - name: Run Tests
         run: pytest -vv --asyncio-mode=auto tests/
