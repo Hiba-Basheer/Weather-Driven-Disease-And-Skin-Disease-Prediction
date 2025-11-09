@@ -8,13 +8,12 @@ or category labels from input images. It correctly handles preprocessing,
 prediction, and outputs top-3 results with confidence scores.
 """
 
-import logging
 import os
-from io import BytesIO
-
-import numpy as np
 import tensorflow as tf
+import numpy as np
+import logging
 from PIL import Image
+from io import BytesIO
 from tensorflow.keras.applications.resnet50 import preprocess_input
 
 logger = logging.getLogger("ImageService")
@@ -41,9 +40,7 @@ class ImageClassificationService:
             IOError: If the Keras model fails to load.
         """
         if not os.path.exists(model_path):
-            raise FileNotFoundError(
-                f"Image classification model not found at: {model_path}"
-            )
+            raise FileNotFoundError(f"Image classification model not found at: {model_path}")
         if not os.path.exists(labels_path):
             raise FileNotFoundError(f"Class labels file not found at: {labels_path}")
 
@@ -56,12 +53,10 @@ class ImageClassificationService:
             raise IOError(f"Failed to load Keras model: {e}")
 
         # Load class labels
-        with open(labels_path, "r") as f:
-            self.labels = [line.strip() for line in f if line.strip()]
+        with open(labels_path, 'r') as f:
+            self.class_labels = [line.strip() for line in f if line.strip()]
 
-        logger.info(
-            f"Image Classification Model loaded with {len(self.labels)} classes."
-        )
+        logger.info(f"Image Classification Model loaded with {len(self.class_labels)} classes.")
 
     def _preprocess_image(self, image_bytes: bytes) -> np.ndarray:
         """
@@ -113,7 +108,7 @@ class ImageClassificationService:
                 return {
                     "error": "Mismatch between model outputs and class labels.",
                     "prediction": "N/A",
-                    "status": "Error",
+                    "status": "Error"
                 }
 
             # Compute top-3 predictions
@@ -129,7 +124,7 @@ class ImageClassificationService:
                 "prediction": predicted_label,
                 "confidence": confidence,
                 "top_predictions": top_predictions,
-                "status": "Success",
+                "status": "Success"
             }
 
         except Exception as e:
@@ -137,7 +132,7 @@ class ImageClassificationService:
             return {
                 "error": f"Internal image processing error: {e}",
                 "prediction": "N/A",
-                "status": "Error",
+                "status": "Error"
             }
 
 
@@ -155,14 +150,13 @@ if __name__ == "__main__":
         python image_service.py
     """
     import time
-    from pathlib import Path
-
     from dotenv import load_dotenv
+    from pathlib import Path
 
     load_dotenv()
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
 
     # CONFIGURATION
@@ -178,7 +172,7 @@ if __name__ == "__main__":
     GROUND_TRUTH = {
         "1. Eczema 1677": "Eczema",
         "2. Melanoma 15.75k": "Melanoma",
-        "3. Atopic Dermatitis - 1.25k": "Atopic Dermatitis",
+        "3. Atopic Dermatitis - 1.25k": "Atopic Dermatitis"
     }
 
     # Validation image paths
@@ -190,7 +184,8 @@ if __name__ == "__main__":
 
     # Initialize service
     service = ImageClassificationService(
-        model_path=str(MODEL_PATH), labels_path=str(LABELS_PATH)
+        model_path=str(MODEL_PATH),
+        labels_path=str(LABELS_PATH)
     )
 
     # Testing loop
@@ -211,7 +206,7 @@ if __name__ == "__main__":
         folder_name = path.parent.name
         expected = GROUND_TRUTH.get(
             folder_name.split()[0] + ". " + " ".join(folder_name.split()[1:3]),
-            "Unknown",
+            "Unknown"
         )
 
         # Load image bytes
@@ -248,9 +243,7 @@ if __name__ == "__main__":
         for item in top3:
             marker = "Correct" if item["label"] == expected else ""
             print(f"  • {item['label']:25} {item['confidence']:.4f} {marker}")
-        print(
-            f"Time: {elapsed:.3f}s | Top-1: {'PASS' if top1_match else 'FAIL'} | Top-3: {'PASS' if top3_match else 'FAIL'}"
-        )
+        print(f"Time: {elapsed:.3f}s | Top-1: {'PASS' if top1_match else 'FAIL'} | Top-3: {'PASS' if top3_match else 'FAIL'}")
         print("-" * 80)
 
     # REPORT SUMMARY
@@ -258,7 +251,7 @@ if __name__ == "__main__":
     acc_top3 = correct_top3 / total * 100
     avg_time = sum(times) / len(times) if times else 0.0
 
-    print("\nFINAL REPORT")
+    print(f"\nFINAL REPORT")
     print(f"Top-1 Accuracy : {correct_top1}/{total} ({acc_top1:.1f}%)")
     print(f"Top-3 Accuracy : {correct_top3}/{total} ({acc_top3:.1f}%)")
     print(f"Avg Inference  : {avg_time:.3f}s")

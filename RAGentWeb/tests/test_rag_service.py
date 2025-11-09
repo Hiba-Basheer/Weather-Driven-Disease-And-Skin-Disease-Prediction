@@ -1,6 +1,5 @@
 # RAGentWeb/tests/test_rag_service.py
 from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 from src.rag_service import RAGService
 
@@ -11,11 +10,11 @@ from src.rag_service import RAGService
 @pytest.mark.asyncio
 async def test_rag_chat(mock_chain_class, mock_faiss, mock_getenv):
     # Mock async chain
-    mock_chain_instance = AsyncMock()
+    mock_chain_instance = MagicMock()
     mock_chain_instance.invoke = AsyncMock(
         return_value={"answer": "Test answer", "source_documents": ["doc1", "doc2"]}
     )
-    mock_chain_class.return_value = mock_chain_instance
+    mock_chain_class.from_llm.return_value = mock_chain_instance
 
     service = RAGService(db_path="/fake/path")
     result = await service.chat("Test query")
