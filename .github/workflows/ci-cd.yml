@@ -10,7 +10,7 @@ on:
 jobs:
   quality:
     name: Code Quality
-    runs-on: ubuntu-latest    
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
@@ -22,12 +22,16 @@ jobs:
       - run: pip install ruff black mypy bandit isort
       - run: pip install -r requirements.txt
 
-      # AUTO-FIX EVERYTHING
-      - run: |
+      # AUTO-FORMAT FIRST
+      - name: Apply formatting
+        run: |
           black src/ tests/ --quiet
           isort src/ tests/ --quiet
+
+      - name: Fix lint issues
+        run: |
           sed -i '/^import os$/d' tests/conftest.py || true
-          sed -i '1s/^/import os\n/' tests/conftest.py
+          sed -i '1s/^/import os\n/' tests/conftest.py || true
           sed -i 's|AsyncMock, ||g' tests/test_rag_service.py || true
 
       - run: ruff check src/ tests/
