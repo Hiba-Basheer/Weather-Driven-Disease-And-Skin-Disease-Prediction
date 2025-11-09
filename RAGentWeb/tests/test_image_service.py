@@ -1,10 +1,8 @@
 # RAGentWeb/tests/test_image_service.py
-import os
 from unittest.mock import MagicMock, mock_open, patch
 from PIL import Image
 import io
 import numpy as np
-import pytest
 from src.image_service import ImageClassificationService
 
 @patch("os.path.exists", return_value=True)

@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import pytest
+import numpy as np
 from unittest.mock import MagicMock, patch
 from src.dl_service import DLService
 
