@@ -1,19 +1,14 @@
 # RAGentWeb/tests/test_main.py
 import pytest
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient, ASGITransport
 from src.main import app
-
 
 @pytest.fixture
 async def client():
-    # Create the client
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        # Manually trigger FastAPI startup
-        await ac.app.router.startup()
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-        await ac.app.router.shutdown()
+
 
 
 @pytest.mark.asyncio

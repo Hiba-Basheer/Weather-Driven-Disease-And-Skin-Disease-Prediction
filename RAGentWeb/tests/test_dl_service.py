@@ -5,15 +5,13 @@ import joblib
 import pytest
 from src.dl_service import DLService
 
+def fake_scaler(X):
+    return X
 
 @pytest.fixture(autouse=True)
 def create_fake_scaler(fake_models: Path):
     scaler_path = fake_models / "dl" / "scaler.pkl"
     scaler_path.parent.mkdir(parents=True, exist_ok=True)
-
-    def fake_scaler(X):
-        return X
-
     joblib.dump(fake_scaler, scaler_path)
 
 
