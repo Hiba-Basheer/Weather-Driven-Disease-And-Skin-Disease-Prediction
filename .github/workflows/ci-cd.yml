@@ -9,7 +9,7 @@ on:
 
 jobs:
   quality:
-    name: Code Quality (only ruff)
+    name: Code Quality
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff
-      - run: ruff check src/ tests/ || true  # NEVER FAIL
+      - run: ruff check src/ tests/ || true
 
   test:
     name: Run Tests
@@ -39,11 +39,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install ALL deps (including sentence-transformers)
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx[http2] pillow numpy sentence-transformers tensorflow requests
+          pip install pytest pytest-asyncio httpx[http2] pillow numpy sentence-transformers tensorflow
 
       - name: Create fake models
         run: |
@@ -69,15 +69,12 @@ jobs:
               import tensorflow as tf
               from unittest.mock import MagicMock
               tf.keras.models.load_model = lambda *a,**k: MagicMock()
-              
               import requests
               mock_resp = MagicMock()
               mock_resp.ok = True
               mock_resp.json.return_value = {"main": {"temp": 30.0, "humidity": 70}}
               mock_resp.raise_for_status = lambda: None
               requests.get = lambda *a,**k: mock_resp
-              
-              # Mock sentence-transformers
               from types import SimpleNamespace
               class FakeEmbeddings:
                   def embed_query(self, x): return [0.1] * 384
@@ -86,7 +83,7 @@ jobs:
               sys.modules['sentence_transformers'] = SimpleNamespace(SentenceTransformer=lambda x: FakeEmbeddings())
           EOF
 
-      - name: Write conftest.py
+      - name: Write conftest.py (MOCK ALL SERVICES — NO 503)
         run: |
           cat > tests/conftest.py <<'EOF'
           import pytest
