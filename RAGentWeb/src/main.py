@@ -231,4 +231,3 @@ async def health_check():
         "message": "RAGentWeb API is running and all services are loaded.",
     }
     return JSONResponse(content=status)
-
