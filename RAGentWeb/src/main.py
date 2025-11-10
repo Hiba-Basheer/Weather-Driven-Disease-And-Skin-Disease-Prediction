@@ -64,6 +64,9 @@ rag_service: Optional[RAGService] = None
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -76,7 +79,7 @@ async def lifespan(app: FastAPI):
     """
     global ml_service, dl_service, image_service, rag_service
 
-    logger.info("Application startup — initializing AI services...")
+    logger.info("Application startup — initializing AI services")
     start_time = time.time()
 
     # ML Service
@@ -118,24 +121,22 @@ async def lifespan(app: FastAPI):
     logger.info(f"All services loaded in {elapsed:.2f} seconds.")
 
     # Small delay for deployment environments (Cloud Run)
-    time.sleep(3)
+    time.sleep(5)
+    logger.info("Startup complete. Ready to accept requests.")
 
     yield
 
-    logger.info("Shutting down services...")
+    logger.info("Shutting down services")
 
 
 # Application Setup
 
 app = FastAPI(
     title="Health AI Predictor & RAGent Web API",
-    description="Unified API for ML, DL, Image Classification, and RAG-based Q&A.",
-    version="1.0.0",
     lifespan=lifespan,
 )
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-
 
 # Health Check Endpoint
 
