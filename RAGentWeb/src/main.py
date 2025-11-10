@@ -73,7 +73,6 @@ class RAGQueryRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Replacement for @app.on_event("startup") that works reliably on Cloud Run.
     Loads all models and adds a short delay so Cloud Run doesn't kill the container.
     """
     global ml_service, dl_service, image_service, rag_service
@@ -121,7 +120,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("All service initialization attempts complete.\n")
 
-    # give uvicorn time to bind port
+    # Critical for Cloud Run: give uvicorn time to bind port
     time.sleep(5)
     logger.info("Startup delay complete — container ready for traffic.")
 
@@ -130,6 +129,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down services...")
 
 
+# RECREATE app with lifespan
 app = FastAPI(
     title="Health AI Predictor & RAGent Web API",
     lifespan=lifespan
@@ -143,7 +143,7 @@ templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 # Legacy startup event 
 @app.on_event("startup")
 async def startup_event() -> None:
-    """Legacy startup event"""
+    """Legacy startup event """
     logger.info("Legacy startup event triggered — initialization handled by lifespan.")
 
 
