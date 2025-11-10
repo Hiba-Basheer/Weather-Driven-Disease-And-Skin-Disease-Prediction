@@ -68,12 +68,6 @@ class RAGQueryRequest(BaseModel):
     query: str
 
 
-# INSTANT HEALTH ENDPOINT
-@app.get("/health")
-async def instant_health_check():
-    return {"status": "healthy"}
-
-
 # Lifespan: actual model loading
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -130,7 +124,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down services...")
 
 
-# CREATE APP AFTER DEFINING INSTANT HEALTH
+# CREATE APP FIRST
 app = FastAPI(
     title="Health AI Predictor & RAGent Web API",
     lifespan=lifespan
@@ -141,7 +135,13 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-# Legacy startup event 
+# INSTANT HEALTH ENDPOINT
+@app.get("/health")
+async def instant_health_check():
+    return {"status": "healthy"}
+
+
+# Legacy startup event
 @app.on_event("startup")
 async def startup_event() -> None:
     """Legacy startup event — actual init in lifespan()."""
@@ -216,7 +216,7 @@ async def rag_chat_endpoint(payload: RAGQueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# FULL HEALTH ENDPOINT 
+# DETAILED HEALTH ENDPOINT 
 @app.get("/health")
 async def health_check():
     """Detailed health check showing service status."""
