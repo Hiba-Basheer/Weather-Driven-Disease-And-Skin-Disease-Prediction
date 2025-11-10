@@ -135,7 +135,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-# INSTANT HEALTH ENDPOINT
+# INSTANT HEALTH ENDPOINT 
 @app.get("/health")
 async def instant_health_check():
     return {"status": "healthy"}
@@ -216,7 +216,7 @@ async def rag_chat_endpoint(payload: RAGQueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# DETAILED HEALTH ENDPOINT 
+# DETAILED HEALTH ENDPOINT
 @app.get("/health")
 async def health_check():
     """Detailed health check showing service status."""
@@ -231,3 +231,5 @@ async def health_check():
         "message": "RAGentWeb API is running and all services are loaded.",
     }
     return JSONResponse(content=status)
+
+
