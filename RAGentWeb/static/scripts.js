@@ -1,5 +1,5 @@
 // Base URL for API calls
-const BASE_API_URL = "http://127.0.0.1:8000"; 
+const BASE_API_URL = ""; 
 
 document.addEventListener('DOMContentLoaded', () => {
 
