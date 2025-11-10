@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Download embedding model + all needed files
 RUN mkdir -p models/embeddings && \
-    curl -L -o models/embeddings/pytorch_model.bin https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/pytorch_model.bin && \
+    curl -L -o models/embeddings/pytorch_model.bin https://huggingface.co/sentence-transformers/par degrad-MiniLM-L3-v2/resolve/main/pytorch_model.bin && \
     curl -L -o models/embeddings/config.json https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/config.json && \
     curl -L -o models/embeddings/tokenizer.json https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/tokenizer.json && \
     curl -L -o models/embeddings/vocab.txt https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/vocab.txt && \
@@ -45,8 +45,7 @@ ENV PATH=/usr/local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     TF_CPP_MIN_LOG_LEVEL=2 \
     FAISS_PATH=/app/data/vector_store/faiss_index \
-    PYTHONPATH=/app \
-    PORT=8000
+    PYTHONPATH=/app
 
 RUN useradd -m -s /bin/bash appuser && \
     chown -R appuser:appuser /app && \
