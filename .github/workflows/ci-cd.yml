@@ -8,12 +8,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality:
-    name: Code Quality (flake8)
+  lint:
+    name: Lint with flake8
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,21 +27,16 @@ jobs:
         run: pip install flake8
 
       - name: Run flake8
-        run: |
-          flake8 src/ tests/ \
-            --max-line-length=88 \
-            --extend-ignore=E203,W503 \
-            --show-source \
-            --statistics
+        run: flake8 src/ tests/
 
   deploy:
     name: Deploy to Cloud Run
-    needs: quality
+    needs: lint
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./RAGARAGentWeb
+        working-directory: ./RAGentWeb
     permissions:
       contents: read
       id-token: write
@@ -57,10 +53,10 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configure Docker
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
-      - name: Build and Push Docker Image
+      - name: Build & Push Docker Image
         run: |
           IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
           docker build -t "$IMAGE" -f Dockerfile .
@@ -69,7 +65,7 @@ jobs:
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy rag-web \
-            --image "asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}" \
+            --image "$IMAGE" \
             --platform managed \
             --region asia-south1 \
             --allow-unauthenticated \
