@@ -55,6 +55,9 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
+      - name: Force clean build
+        run: docker builder prune -af || true
+        
       - name: Build, Push & Deploy
         env:
           IMAGE: asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}
