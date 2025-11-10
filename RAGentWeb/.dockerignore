@@ -1,6 +1,8 @@
-# .dockerignore
+# Ignore caches, envs, and build junk
 __pycache__/
-*.pyc *.pyo *.pyd
+*.pyc
+*.pyo
+*.pyd
 .env
 .venv*
 web_venv/
@@ -15,28 +17,31 @@ Thumbs.db
 temp_downloads/
 downloads/
 temp/
-data/skin_diseases/
-data/weather_related_disease/
-data/**
-!data/vector_store/
-!data/vector_store/**
-static/images/
-static/videos/
-static/fonts/
-
-!templates/
-!templates/**
-!templates/**/*.html
-
 *.ipynb
 notebooks/
 tests/
 build/
 dist/
-*.tar *.gz *.zip *.bak
+*.tar
+*.gz
+*.zip
+*.bak
+*.bin
+*.index
+
+# Ignore heavy model training outputs
 models/**/checkpoints/
 models/**/artifacts/
 models/**/runs/
-*.bin
-*.index
-!models/embeddings/
+
+!data/vector_store/
+!data/vector_store/**
+!data/weather_related_disease/
+!data/skin_diseases/
+!models/
+!models/**
+!templates/
+!templates/**
+!templates/**/*.html
+
+
