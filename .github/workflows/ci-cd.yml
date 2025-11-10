@@ -75,5 +75,5 @@ jobs:
             --memory 8Gi \
             --timeout 1200s \
             --max-instances 1 \
-            --set-env-vars OPENWEATHERMAP_API_KEY=${{ secrets.OPENWEATHERMAP_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }} \
+            --set-env-vars "OPENWEATHERMAP_API_KEY=${{ secrets.OPENWEATHERMAP_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
             --quiet
