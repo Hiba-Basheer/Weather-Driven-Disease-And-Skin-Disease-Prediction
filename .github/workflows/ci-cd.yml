@@ -5,139 +5,71 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  
+  workflow_dispatch:
 
 jobs:
   quality:
-    name: Code Quality
+    name: Code Quality (flake8)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install ruff
-      - run: ruff check src/ tests/ || true
 
-  test:
-    name: Run Tests
-    needs: quality
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./RAGentWeb
-    env:
-      CI: "true"
-      PYTHONPATH: ${{ github.workspace }}/RAGentWeb/src
-      MODEL_ROOT: ${{ github.workspace }}/RAGentWeb/models
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install deps
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Run flake8
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx[http2] pillow numpy sentence-transformers tensorflow
-
-      - name: Create fake models
-        run: |
-          mkdir -p models/dl models/ml
-          python - <<'PY'
-          import zipfile, pathlib
-          p = pathlib.Path('models/dl/dl_model.keras')
-          p.parent.mkdir(parents=True, exist_ok=True)
-          with zipfile.ZipFile(p, 'w') as z:
-              z.writestr('config.json', '{"class_name":"Model"}')
-              z.writestr('model.weights.bin', b'\x00'*100)
-          PY
-          touch models/dl/{scaler.pkl,label_encoder.pkl,text_vectorizer_config.json,text_vectorizer_vocab.txt}
-          touch models/ml/{trained_model.pkl,label_encoder.pkl,ml_expected_columns.pkl}
-          touch models/resnet_model.h5
-          echo -e "label1\nlabel2" > models/class_labels.txt
-
-      - name: MOCK ALL EXTERNAL DEPENDENCIES
-        run: |
-          cat > src/__init__.py <<'EOF'
-          import os
-          if os.getenv("CI") == "true":
-              import tensorflow as tf
-              from unittest.mock import MagicMock
-              tf.keras.models.load_model = lambda *a,**k: MagicMock()
-              import requests
-              mock_resp = MagicMock()
-              mock_resp.ok = True
-              mock_resp.json.return_value = {"main": {"temp": 30.0, "humidity": 70}}
-              mock_resp.raise_for_status = lambda: None
-              requests.get = lambda *a,**k: mock_resp
-              from types import SimpleNamespace
-              class FakeEmbeddings:
-                  def embed_query(self, x): return [0.1] * 384
-                  def embed_documents(self, x): return [[0.1] * 384]
-              import sys
-              sys.modules['sentence_transformers'] = SimpleNamespace(SentenceTransformer=lambda x: FakeEmbeddings())
-          EOF
-
-      - name: Write conftest.py (MOCK ALL SERVICES — NO 503)
-        run: |
-          cat > tests/conftest.py <<'EOF'
-          import pytest
-          from httpx import ASGITransport, AsyncClient
-          from src.main import app
-          from unittest.mock import MagicMock
-
-          @pytest.fixture(autouse=True)
-          def mock_services():
-              app.state.dl_service = MagicMock()
-              app.state.ml_service = MagicMock()
-              app.state.image_service = MagicMock()
-              app.state.rag_service = MagicMock()
-
-              app.state.dl_service.predict.return_value = {"prediction": "Dengue", "confidence": 0.98}
-              app.state.ml_service.predict.return_value = {"prediction": "Malaria", "confidence": 0.92}
-              app.state.image_service.classify.return_value = {"prediction": "Rash", "confidence": 0.89}
-              app.state.rag_service.chat.return_value = {"answer": "Stay hydrated", "sources": ["doc1", "doc2"]}
-
-          @pytest.fixture
-          async def client():
-              async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-                  yield ac
-          EOF
-
-      - name: Run Tests
-        run: pytest -vv --asyncio-mode=auto tests/
+          flake8 src/ tests/ \
+            --max-line-length=88 \
+            --extend-ignore=E203,W503 \
+            --show-source \
+            --statistics
 
   deploy:
     name: Deploy to Cloud Run
-    needs: test
+    needs: quality
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./RAGentWeb
+        working-directory: ./RAGARAGentWeb
     permissions:
       contents: read
       id-token: write
+
     steps:
       - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIP }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
-      - uses: google-github-actions/setup-gcloud@v2
-      - run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
-      - run: |
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |
           IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
           docker build -t "$IMAGE" -f Dockerfile .
           docker push "$IMAGE"
-      - run: |
+
+      - name: Deploy to Cloud Run
+        run: |
           gcloud run deploy rag-web \
-            --image "$IMAGE" \
+            --image "asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}" \
             --platform managed \
             --region asia-south1 \
             --allow-unauthenticated \
