@@ -73,6 +73,7 @@ class RAGQueryRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
+    Replacement for @app.on_event("startup") that works reliably on Cloud Run.
     Loads all models and adds a short delay so Cloud Run doesn't kill the container.
     """
     global ml_service, dl_service, image_service, rag_service
@@ -129,7 +130,6 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down services...")
 
 
-# RECREATE app with lifespan
 app = FastAPI(
     title="Health AI Predictor & RAGent Web API",
     lifespan=lifespan
@@ -140,10 +140,9 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-# Legacy startup event 
 @app.on_event("startup")
 async def startup_event() -> None:
-    """Legacy startup event """
+    """Legacy startup event"""
     logger.info("Legacy startup event triggered — initialization handled by lifespan.")
 
 
@@ -192,9 +191,7 @@ async def predict_dl_endpoint(payload: DLPredictionRequest):
 async def classify_image_endpoint(file: UploadFile = File(...)):
     """Classifies an uploaded image using the CNN-based skin disease model."""
     if not image_service:
-        raise HTTPException(
-            status_code=503, detail="Image Classification Service not available."
-        )
+        raise HTTPException(status_code=503, detail="Image Classification Service not available.")
     try:
         image_bytes = await file.read()
         result = image_service.classify(image_bytes)
