@@ -121,7 +121,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("All service initialization attempts complete.\n")
 
-    # Critical for Cloud Run: give uvicorn time to bind port
+    # give uvicorn time to bind port
     time.sleep(5)
     logger.info("Startup delay complete — container ready for traffic.")
 
@@ -135,17 +135,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Mount static files & templates 
+# Mount static files & templates
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
+# Legacy startup event 
 @app.on_event("startup")
 async def startup_event() -> None:
-    """
-    FastAPI startup event handler (kept for backward compatibility).
-    Actual loading is now done in lifespan().
-    """
+    """Legacy startup event"""
     logger.info("Legacy startup event triggered — initialization handled by lifespan.")
 
 
@@ -221,7 +219,7 @@ async def rag_chat_endpoint(payload: RAGQueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# HEALTH ENDPOINT 
+# HEALTH ENDPOINT
 @app.get("/health")
 async def health_check():
     """
