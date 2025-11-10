@@ -8,13 +8,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  lint:
-    name: Lint with flake8
+  quality:
+    name: Code Quality (flake8)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./RAGentWeb
-
     steps:
       - uses: actions/checkout@v4
 
@@ -31,12 +30,12 @@ jobs:
 
   deploy:
     name: Deploy to Cloud Run
-    needs: lint
+    needs: quality
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./RAGentWeb
+        working-directory: ./RAGentWeb  
     permissions:
       contents: read
       id-token: write
@@ -53,10 +52,10 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker
+      - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
-      - name: Build & Push Docker Image
+      - name: Build and Push Docker Image
         run: |
           IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
           docker build -t "$IMAGE" -f Dockerfile .

@@ -11,16 +11,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir --user \
     torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
 
-# Install python requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Download embedding model
 RUN mkdir -p models/embeddings && \
     curl -L -o models/embeddings/pytorch_model.bin \
          https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/pytorch_model.bin && \
     curl -L -o models/embeddings/config.json \
-         https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/config.json
+         https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/config.json && \
+    curl -L -o models/embeddings/tokenizer.json \
+         https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/tokenizer.json && \
+    curl -L -o models/embeddings/vocab.txt \
+         https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/vocab.txt
 
 
 # Runtime Stage
@@ -32,16 +35,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 libjpeg62-turbo zlib1g curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed python packages from builder
-COPY --from=builder /root/.local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /root/.local/bin /usr/local/bin
+# Copy installed python packages from builder 
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy embedding model
 COPY --from=builder /app/models/embeddings models/embeddings
 
-# Copy **entire** project (templates, src, data, …)
+# Copy entire project
 COPY . .
-
 
 # Environment
 ENV PATH=/usr/local/bin:$PATH \
