@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./RAGentWeb  
+        working-directory: ./RAGentWeb   # Fixed typo
     permissions:
       contents: read
       id-token: write
@@ -52,17 +52,18 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for Artifact Registry
+      - name: Configure Docker
         run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
-      - name: Build and Push Docker Image
+      - name: Build, Push & Deploy
+        env:
+          IMAGE: asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}
         run: |
-          IMAGE="asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}"
+          # Build and push
           docker build -t "$IMAGE" -f Dockerfile .
           docker push "$IMAGE"
 
-      - name: Deploy to Cloud Run
-        run: |
+          # Deploy using the same IMAGE variable
           gcloud run deploy rag-web \
             --image "$IMAGE" \
             --platform managed \
