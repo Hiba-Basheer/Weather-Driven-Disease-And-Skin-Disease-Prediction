@@ -1,4 +1,5 @@
-# Ignore caches, temp files, and system folders
+.git/
+.gitignore
 __pycache__/
 *.pyc
 *.pyo
@@ -9,8 +10,6 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
-.git/
-.gitignore
 *.log
 temp_downloads/
 downloads/
@@ -24,14 +23,14 @@ dist/
 *.zip
 *.bak
 
-# Exclude unused datasets
+# Exclude unused datasets, but include vector store
 data/skin_diseases/
 data/weather_related_disease/
 data/**
 !data/vector_store/
 !data/vector_store/**
 
-# Keep essential folders for app runtime
+# Always include models, static, templates
 !models/**
-!templates/**
 !static/**
+!templates/**
