@@ -62,13 +62,13 @@ jobs:
         env:
           IMAGE: asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}
         run: |
-          # Enable BuildKit for multi-stage build support
+          # Enable BuildKit for multi-stage support
           export DOCKER_BUILDKIT=1
 
-          # Build the Docker image locally with the builder stage
-          docker build -t "$IMAGE" -f Dockerfile .
+          # Force local build
+          docker build --progress=plain -t "$IMAGE" -f Dockerfile .
 
-          # Push to Artifact Registry
+          # Push image to Artifact Registry
           docker push "$IMAGE"
 
           # Deploy to Cloud Run
