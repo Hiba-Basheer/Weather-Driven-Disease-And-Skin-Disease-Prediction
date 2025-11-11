@@ -30,7 +30,11 @@ data/**
 !data/vector_store/
 !data/vector_store/**
 
-# Always include models, static, templates
+# Always include models, static, templates,...
 !models/**
 !static/**
 !templates/**
+!requirements.txt
+!Dockerfile
+!src/**
+!main.py
