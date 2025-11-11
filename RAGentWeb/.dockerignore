@@ -1,3 +1,4 @@
+# IGNORE JUNK
 .git/
 .gitignore
 __pycache__/
@@ -23,18 +24,21 @@ dist/
 *.zip
 *.bak
 
-# Exclude unused datasets, but include vector store
+# EXCLUDE LARGE DATASETS
 data/skin_diseases/
 data/weather_related_disease/
-data/**
+
+# INCLUDE ONLY WHAT NEED
+!models/
+!models/**
 !data/vector_store/
 !data/vector_store/**
-
-# Always include models, static, templates,...
-!models/**
+!static/
 !static/**
+!templates/
 !templates/**
+!src/
+!src/**
 !requirements.txt
 !Dockerfile
-!src/**
 !main.py
