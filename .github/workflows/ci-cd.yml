@@ -58,15 +58,16 @@ jobs:
       - name: Force clean build
         run: docker builder prune -af || true
 
+      
       - name: Build, Push & Deploy
         env:
           IMAGE: asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}
         run: |
-          # Enable BuildKit for multi-stage support
+          # Enable BuildKit for multi-stage builds
           export DOCKER_BUILDKIT=1
 
-          # Force local build
-          docker build --progress=plain -t "$IMAGE" -f Dockerfile .
+          # Build locally and specify the Dockerfile explicitly
+          docker build --progress=plain --file Dockerfile --tag "$IMAGE" .
 
           # Push image to Artifact Registry
           docker push "$IMAGE"
