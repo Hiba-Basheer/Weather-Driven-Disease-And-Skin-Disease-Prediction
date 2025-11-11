@@ -1,4 +1,4 @@
-# IGNORE JUNK
+# === IGNORE JUNK ===
 .git/
 .gitignore
 __pycache__/
@@ -24,24 +24,18 @@ dist/
 *.zip
 *.bak
 
-# EXCLUDE LARGE DATASETS
+# === EXCLUDE LARGE DATASETS ===
 data/skin_diseases/
 data/weather_related_disease/
 
-# INCLUDE MODELS
+# === INCLUDE ONLY WHAT YOU NEED ===
 !models/
-!models/ml/
-!models/ml/**
-!models/dl/
-!models/dl/**
-!models/resnet_model.h5
-
-# INCLUDE FAISS INDEX
+!models/**
 !data/vector_store/
+!data/vector_store/**
 !data/vector_store/faiss_index/
 !data/vector_store/faiss_index/**
 
-# INCLUDE APP CODE
 !static/
 !static/**
 !templates/
