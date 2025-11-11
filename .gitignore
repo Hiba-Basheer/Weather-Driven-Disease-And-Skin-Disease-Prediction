@@ -1,4 +1,3 @@
-
 # Python cache and artifacts
 __pycache__/
 *.py[cod]
@@ -52,14 +51,17 @@ temp/
 *.npy
 *.npz
 
-# Vector stores & embeddings
+# Vector stores & embeddings — IGNORE ALL EXCEPT RAGentWeb
 data/vector_store/
 *.faiss
 *.pkl
+!RAGentWeb/data/vector_store/
+!RAGentWeb/data/vector_store/**
+!RAGentWeb/data/vector_store/faiss_index/
+!RAGentWeb/data/vector_store/faiss_index/**
 
-# Models & checkpoints
+# Models & checkpoints — IGNORE ALL EXCEPT RAGentWeb
 models/
-!RAGentWeb/models/
 DL_module/models/
 checkpoints/
 model_artifacts/
@@ -69,6 +71,13 @@ model_artifacts/
 *.pth
 *.pt
 *.joblib
+!RAGentWeb/models/
+!RAGentWeb/models/**
+!RAGentWeb/models/ml/
+!RAGentWeb/models/ml/**
+!RAGentWeb/models/dl/
+!RAGentWeb/models/dl/**
+!RAGentWeb/models/resnet_model.h5
 
 # Reports & plots
 plots/
@@ -81,9 +90,16 @@ plots/
 # FastAPI static / templates cache
 templates/__pycache__/
 
-# Allow static folder to be committed
-!RAGentWeb/RAGentWeb/static/
-!RAGentWeb/RAGentWeb/static/.gitkeep
+# Allow RAGentWeb static folder to be committed
+!RAGentWeb/static/
+!RAGentWeb/static/**
+!RAGentWeb/templates/
+!RAGentWeb/templates/**
+!RAGentWeb/src/
+!RAGentWeb/src/**
+!RAGentWeb/requirements.txt
+!RAGentWeb/Dockerfile
+!RAGentWeb/main.py
 
 # IDE / OS / Notebook files
 .DS_Store
@@ -106,19 +122,10 @@ RAG_chatbot/data/**/*.txt
 *.html text eol=lf
 *.md text eol=lf
 
-
-*.py text eol=lf
-
-
 # Ignore DL module artifacts
 DL/artifacts/
 DL/mlflow_artifacts/
 
-
 RAGentWeb/src/test.py
-
 allfiles.txt
-
-
 DL/scaler.py
-
