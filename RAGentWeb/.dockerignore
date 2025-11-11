@@ -1,23 +1,20 @@
-# Ignore caches, envs, and build junk
+# Ignore caches, temp files, and system folders
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .env
 .venv*
-web_venv/
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 .git/
 .gitignore
-*.md
 *.log
 temp_downloads/
 downloads/
 temp/
-*.ipynb
 notebooks/
 tests/
 build/
@@ -26,22 +23,15 @@ dist/
 *.gz
 *.zip
 *.bak
-*.bin
-*.index
 
-# Ignore heavy model training outputs
-models/**/checkpoints/
-models/**/artifacts/
-models/**/runs/
-
+# Exclude unused datasets
+data/skin_diseases/
+data/weather_related_disease/
+data/**
 !data/vector_store/
 !data/vector_store/**
-!data/weather_related_disease/
-!data/skin_diseases/
-!models/
+
+# Keep essential folders for app runtime
 !models/**
-!templates/
 !templates/**
-!templates/**/*.html
-
-
+!static/**
