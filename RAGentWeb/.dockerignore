@@ -1,4 +1,4 @@
-# IGNORE JUNK
+# Ignore junk
 .git/
 .gitignore
 __pycache__/
@@ -24,19 +24,15 @@ dist/
 *.zip
 *.bak
 
-# EXCLUDE LARGE DATASETS
+# Exclude large datasets
 data/skin_diseases/
 data/weather_related_disease/
 
-# INCLUDE ONLY WHAT NEED
+# Include required files
 !models/
 !models/**
-!models/*.h5     
 !data/vector_store/
 !data/vector_store/**
-!data/vector_store/faiss_index/
-!data/vector_store/faiss_index/**
-
 !static/
 !static/**
 !templates/

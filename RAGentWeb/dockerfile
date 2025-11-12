@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir \
     torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
 
-# Install dependencies
+# Install requirements
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -31,12 +31,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 libjpeg62-turbo zlib1g curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy libraries and embeddings
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app/models/embeddings models/embeddings
 
-# Copy everything else (includes models + data)
-COPY . .
+# Copy only required folders explicitly to avoid overwriting
+COPY src/ src/
+COPY static/ static/
+COPY templates/ templates/
+COPY requirements.txt .
+COPY main.py .
+COPY data/vector_store/ data/vector_store/
+COPY models/ml/ models/ml/
+COPY models/dl/ models/dl/
+COPY models/resnet_model.h5 models/resnet_model.h5
+COPY models/class_labels.txt models/class_labels.txt
 
 ENV PATH=/usr/local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
@@ -49,7 +59,6 @@ USER appuser
 
 EXPOSE 8000
 
-# Sanity check before run
-RUN echo "=== Checking model files ===" && ls -R /app/models || true
+RUN echo "=== Verifying model files ===" && ls -lh models/ && file models/resnet_model.h5 || true
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
