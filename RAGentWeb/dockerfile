@@ -41,7 +41,7 @@ COPY src/ src/
 COPY static/ static/
 COPY templates/ templates/
 COPY requirements.txt .
-COPY main.py .
+COPY src/main.py src/main.py
 COPY data/vector_store/ data/vector_store/
 COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
