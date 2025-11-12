@@ -71,13 +71,11 @@ model_artifacts/
 *.pth
 *.pt
 *.joblib
-!RAGentWeb/models/
-!RAGentWeb/models/**
+
 !RAGentWeb/models/ml/
 !RAGentWeb/models/ml/**
 !RAGentWeb/models/dl/
 !RAGentWeb/models/dl/**
-!RAGentWeb/models/resnet_model.h5
 
 # Reports & plots
 plots/
@@ -129,3 +127,7 @@ DL/mlflow_artifacts/
 RAGentWeb/src/test.py
 allfiles.txt
 DL/scaler.py
+
+!RAGentWeb/models/
+!RAGentWeb/models/**
+!RAGentWeb/models/resnet_model.h5
