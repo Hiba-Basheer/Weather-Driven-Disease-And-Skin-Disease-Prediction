@@ -1,1 +1,2 @@
 RAGentWeb/models/resnet_model.h5 filter=lfs diff=lfs merge=lfs -text
+RAGentWeb/models/resnet_model_optimized.tflite filter=lfs diff=lfs merge=lfs -text
