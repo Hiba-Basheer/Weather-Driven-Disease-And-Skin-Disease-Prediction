@@ -28,9 +28,10 @@ dist/
 data/skin_diseases/
 data/weather_related_disease/
 
-# INCLUDE ONLY WHAT YOU NEED
+# INCLUDE ONLY WHAT NEED
 !models/
 !models/**
+!models/*.h5     
 !data/vector_store/
 !data/vector_store/**
 !data/vector_store/faiss_index/
