@@ -60,22 +60,31 @@ jobs:
 
       - name: Build, Push & Deploy
         env:
-          IMAGE: asia-south1-docker.pkg.dev/western-plate-475306-m0/ragentweb-repo/ragentweb:${{ github.sha }}
+          PROJECT_ID: western-plate-475306-m0
+          REGION: asia-south1
+          REPO: ragentweb-repo
+          IMAGE_NAME: ragentweb
+          IMAGE_SHA: ${{ github.sha }}
         run: |
-          # Enable BuildKit for multi-stage build support
           export DOCKER_BUILDKIT=1
+          IMAGE="asia-south1-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE_NAME:$IMAGE_SHA"
+          LATEST_IMAGE="asia-south1-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE_NAME:latest"
 
-          # Build the Docker image locally with the builder stage
+          echo "Building Docker image..."
           docker build -t "$IMAGE" -f Dockerfile .
 
-          # Push to Artifact Registry
+          echo "Pushing image with SHA tag..."
           docker push "$IMAGE"
 
-          # Deploy to Cloud Run
+          echo "Tagging and pushing latest..."
+          docker tag "$IMAGE" "$LATEST_IMAGE"
+          docker push "$LATEST_IMAGE"
+
+          echo "Deploying to Cloud Run..."
           gcloud run deploy rag-web \
             --image "$IMAGE" \
             --platform managed \
-            --region asia-south1 \
+            --region "$REGION" \
             --allow-unauthenticated \
             --port 8000 \
             --cpu 4 \
