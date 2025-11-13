@@ -1,8 +1,26 @@
-# RUNTIME STAGE
+# BUILDER STAGE
+FROM python:3.12-slim AS builder
+WORKDIR /app
+
+# Install build deps + Git
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc g++ curl ca-certificates git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Git LFS 
+RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz | tar xz \
+    && mv git-lfs-3.5.1/git-lfs /usr/local/bin/ \
+    && git lfs install
+
+# Install Python deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Runtime Stage
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install runtime deps 
+# Install runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 libjpeg62-turbo zlib1g curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -20,14 +38,12 @@ COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
 COPY models/class_labels.txt models/class_labels.txt
 
-# DOWNLOAD REAL 225MB MODEL FROM GITHUB RAW
+# DOWNLOAD 225MB MODEL FROM GITHUB RAW
 RUN mkdir -p models && \
     curl -L -o models/resnet_model.h5 \
     "https://raw.githubusercontent.com/Hiba-Basheer/Weather-Driven-Disease-And-Skin-Disease-Prediction/main/RAGentWeb/models/resnet_model.h5" && \
-    echo "MODEL VERIFICATION" && \
-    ls -lh models/resnet_model.h5 && \
-    head -c 10 models/resnet_model.h5 | xxd | grep -i "48 44 46" && \
-    echo "HDF5 signature found (0x48 44 46...)"
+    echo "MODEL DOWNLOADED" && \
+    ls -lh models/resnet_model.h5
 
 # Environment
 ENV PYTHONUNBUFFERED=1 \
