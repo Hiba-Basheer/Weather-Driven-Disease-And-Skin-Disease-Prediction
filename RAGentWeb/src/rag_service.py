@@ -53,11 +53,13 @@ class RAGService:
             self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
             # LLM setup (Groq)
-            groq_api_key = os.getenv("GROQ_API_KEY")
+            groq_api_key = (os.getenv("GROQ_API_KEY") or "").strip()
             if not groq_api_key:
                 raise ValueError("GROQ_API_KEY not set in environment variables or is empty.")
 
-            redacted_key = f"{groq_api_key[:4]}...{groq_api_key[-4:]}" if len(groq_api_key) > 8 else "[redacted]"
+            redacted_key = (
+                f"{groq_api_key[:4]}...{groq_api_key[-4:]}" if len(groq_api_key) > 8 else "[redacted]"
+            )
             logger.info("GROQ API key detected (length=%s, preview=%s)", len(groq_api_key), redacted_key)
 
             self.llm = ChatGroq(
