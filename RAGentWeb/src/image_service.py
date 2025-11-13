@@ -15,6 +15,7 @@ from io import BytesIO
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+from tensorflow.keras.applications.resnet50 import preprocess_input
 
 logger = logging.getLogger("ImageService")
 
@@ -48,15 +49,13 @@ class ImageClassificationService:
 
         try:
             tf.get_logger().setLevel(logging.ERROR)
-            self.interpreter = tf.lite.Interpreter(model_path=model_path)
-            self.interpreter.allocate_tensors()
-            self.input_details = self.interpreter.get_input_details()
-            self.output_details = self.interpreter.get_output_details()
-            self.target_size = (self.input_details[0]['shape'][1], self.input_details[0]['shape'][2])
+            self.model = tf.keras.models.load_model(model_path)
             tf.get_logger().setLevel(logging.INFO)
+            self.target_size = self.model.input_shape[1:3]
         except Exception as e:
-            raise IOError(f"Failed to load TFLite model: {e}")
+            raise IOError(f"Failed to load Keras model: {e}")
 
+        # Load class labels
         with open(labels_path, "r") as f:
             self.labels = [line.strip() for line in f if line.strip()]
 
@@ -84,8 +83,10 @@ class ImageClassificationService:
         image = image.resize(self.target_size)
         image_array = np.array(image, dtype=np.float32)
 
-        image_array = image_array / 127.5 - 1.0
+        # Apply ResNet50 preprocessing (scaling & normalization)
+        image_array = preprocess_input(image_array)
 
+        # Add batch dimension for inference
         return np.expand_dims(image_array, axis=0)
 
     def classify(self, image_bytes: bytes) -> dict:
@@ -105,10 +106,9 @@ class ImageClassificationService:
         """
         try:
             input_tensor = self._preprocess_image(image_bytes)
-            self.interpreter.set_tensor(self.input_details[0]['index'], input_tensor)
-            self.interpreter.invoke()
-            predictions = self.interpreter.get_tensor(self.output_details[0]['index'])[0]
+            predictions = self.model.predict(input_tensor)[0]
 
+            # Sanity check: output dimension should match label count
             if len(predictions) != len(self.labels):
                 return {
                     "error": "Mismatch between model outputs and class labels.",
@@ -116,6 +116,7 @@ class ImageClassificationService:
                     "status": "Error",
                 }
 
+            # Compute top-3 predictions
             top_indices = np.argsort(predictions)[::-1][:3]
             top_predictions = [
                 {"label": self.labels[i], "confidence": float(predictions[i])}
@@ -140,14 +141,15 @@ class ImageClassificationService:
             }
 
 
+# EVALUATION BLOCK
 if __name__ == "__main__":
     """
     Evaluation script for ImageClassificationService.
 
     Evaluates the classification model on a small validation set and reports:
-      Top-1 accuracy (correct first prediction)
-      Top-3 accuracy (correct within top 3 predictions)
-      Average inference latency
+      • Top-1 accuracy (correct first prediction)
+      • Top-3 accuracy (correct within top 3 predictions)
+      • Average inference latency
 
     Example use:
         python image_service.py
@@ -163,7 +165,8 @@ if __name__ == "__main__":
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
 
-    MODEL_PATH = r"D:\brototype\week27\RAGentWeb\models\resnet_model_optimized.tflite"
+    # CONFIGURATION
+    MODEL_PATH = r"D:\brototype\week27\RAGentWeb\models\resnet_model.h5"
     LABELS_PATH = r"D:\brototype\week27\RAGentWeb\models\labels.txt"
 
     if not Path(MODEL_PATH).exists():
@@ -171,22 +174,26 @@ if __name__ == "__main__":
     if not Path(LABELS_PATH).exists():
         raise FileNotFoundError(f"Labels not found: {LABELS_PATH}")
 
+    # Ground-truth mapping for validation dataset
     GROUND_TRUTH = {
         "1. Eczema 1677": "Eczema",
         "2. Melanoma 15.75k": "Melanoma",
         "3. Atopic Dermatitis - 1.25k": "Atopic Dermatitis",
     }
 
+    # Validation image paths
     IMAGE_PATHS = [
         r"D:\brototype\week27\CV\data\processed\val\1. Eczema 1677\0_15.jpg",
         r"D:\brototype\week27\CV\data\processed\val\2. Melanoma 15.75k\ISIC_6653780.jpg",
         r"D:\brototype\week27\CV\data\processed\val\3. Atopic Dermatitis - 1.25k\0_17.jpg",
     ]
 
+    # Initialize service
     service = ImageClassificationService(
         model_path=str(MODEL_PATH), labels_path=str(LABELS_PATH)
     )
 
+    # Testing loop
     correct_top1 = 0
     correct_top3 = 0
     total = len(IMAGE_PATHS)
@@ -207,6 +214,7 @@ if __name__ == "__main__":
             "Unknown",
         )
 
+        # Load image bytes
         with open(img_path, "rb") as f:
             image_bytes = f.read()
 
@@ -223,6 +231,7 @@ if __name__ == "__main__":
         confidence = result["confidence"]
         top3 = result["top_predictions"]
 
+        # Accuracy checks
         top1_match = pred_label == expected
         top3_match = any(p["label"] == expected for p in top3)
 
@@ -231,18 +240,20 @@ if __name__ == "__main__":
         if top3_match:
             correct_top3 += 1
 
+        # Pretty print results
         print(f"\nTest {idx} | Image: {path.name}")
         print(f"Ground Truth: {expected}")
         print(f"Prediction : {pred_label} ({confidence:.4f})")
         print("Top-3:")
         for item in top3:
             marker = "Correct" if item["label"] == expected else ""
-            print(f"  {item['label']:25} {item['confidence']:.4f} {marker}")
+            print(f"  • {item['label']:25} {item['confidence']:.4f} {marker}")
         print(
             f"Time: {elapsed:.3f}s | Top-1: {'PASS' if top1_match else 'FAIL'} | Top-3: {'PASS' if top3_match else 'FAIL'}"
         )
         print("-" * 80)
 
+    # REPORT SUMMARY
     acc_top1 = correct_top1 / total * 100
     acc_top3 = correct_top3 / total * 100
     avg_time = sum(times) / len(times) if times else 0.0
