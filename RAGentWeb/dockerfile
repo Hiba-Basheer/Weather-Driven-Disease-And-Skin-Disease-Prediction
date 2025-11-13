@@ -1,56 +1,36 @@
-# BUILDER STAGE 
-FROM python:3.12-slim AS builder
-WORKDIR /app
-
-# Install build deps + Git
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc g++ curl ca-certificates git \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Git LFS
-RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz | tar xz \
-    && mv git-lfs-3.5.1/git-lfs /usr/local/bin/ \
-    && git lfs install
-
-# Install Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 # RUNTIME STAGE
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install runtime deps
+# Install runtime deps 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 libjpeg62-turbo zlib1g curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
+# Install requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source
 COPY src/ src/
 COPY static/ static/
 COPY templates/ templates/
-COPY requirements.txt .
 COPY data/vector_store/ data/vector_store/
 COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
 COPY models/class_labels.txt models/class_labels.txt
 
-# DOWNLOAD 225MB MODEL FROM GITHUB LFS
-RUN curl -L -o models/resnet_model.h5 \
-    "https://raw.githubusercontent.com/Hiba-Basheer/Weather-Driven-Disease-And-Skin-Disease-Prediction/main/RAGentWeb/models/resnet_model.h5"
-
-# Verify
-RUN echo "MODEL VERIFICATION" && \
+# DOWNLOAD REAL 225MB MODEL FROM GITHUB RAW
+RUN mkdir -p models && \
+    curl -L -o models/resnet_model.h5 \
+    "https://raw.githubusercontent.com/Hiba-Basheer/Weather-Driven-Disease-And-Skin-Disease-Prediction/main/RAGentWeb/models/resnet_model.h5" && \
+    echo "MODEL VERIFICATION" && \
     ls -lh models/resnet_model.h5 && \
-    file models/resnet_model.h5 | grep -i "Hierarchical Data Format"
+    head -c 10 models/resnet_model.h5 | xxd | grep -i "48 44 46" && \
+    echo "HDF5 signature found (0x48 44 46...)"
 
 # Environment
-ENV PATH=/usr/local/bin:$PATH \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     TF_CPP_MIN_LOG_LEVEL=2 \
     FAISS_PATH=/app/data/vector_store/faiss_index \
     PYTHONPATH=/app
@@ -61,4 +41,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
