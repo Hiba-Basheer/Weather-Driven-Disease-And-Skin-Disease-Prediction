@@ -2,14 +2,14 @@
 FROM python:3.12-slim AS builder
 WORKDIR /app
 
-# Install build deps + Git + Git LFS
+# Install build deps + Git
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential gcc g++ curl ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Git LFS
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
-    && apt-get install -y git-lfs \
+# Install Git LFS manually 
+RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz | tar xz \
+    && mv git-lfs-3.5.1/git-lfs /usr/local/bin/ \
     && git lfs install
 
 # Install Python deps
@@ -20,21 +20,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.12-slim
 WORKDIR /app
 
-# Install runtime deps
+# Install runtime deps + Git
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 libjpeg62-turbo zlib1g curl ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Git LFS in runtime
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
-    && apt-get install -y git-lfs \
+# Install Git LFS manually
+RUN curl -L https://github.com/git-lfs/git-lfs/releases/download/v3.5.1/git-lfs-linux-amd64-v3.5.1.tar.gz | tar xz \
+    && mv git-lfs-3.5.1/git-lfs /usr/local/bin/ \
     && git lfs install
 
 # Copy Python packages
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy source code
+# Copy source
 COPY src/ src/
 COPY static/ static/
 COPY templates/ templates/
@@ -44,14 +44,14 @@ COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
 COPY models/class_labels.txt models/class_labels.txt
 
-# COPY LFS-TRACKED MODEL (POINTER ONLY)
+# Copy LFS pointer
 COPY models/resnet_model.h5 models/resnet_model.h5
 
-# PULL THE REAL 225MB MODEL VIA LFS
+# PULL REAL 225MB MODEL
 RUN git lfs pull --include="models/resnet_model.h5"
 
-# Verify file is real
-RUN echo "=== Verifying resnet_model.h5 ===" && \
+# Verify
+RUN echo "=== MODEL VERIFICATION ===" && \
     ls -lh models/resnet_model.h5 && \
     file models/resnet_model.h5 | grep -i "Hierarchical Data Format"
 
@@ -62,7 +62,7 @@ ENV PATH=/usr/local/bin:$PATH \
     FAISS_PATH=/app/data/vector_store/faiss_index \
     PYTHONPATH=/app
 
-# Create user
+# User
 RUN useradd -m -s /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
