@@ -51,11 +51,11 @@ class ImageClassificationService:
         # Check file permissions and size
         if not os.access(model_path, os.R_OK):
             raise IOError(f"Model file is not readable: {model_path}")
-        
+
         model_size = os.path.getsize(model_path)
         if model_size == 0:
             raise IOError(f"Model file is empty: {model_path}")
-        
+
         logger.info(f"Loading model from {model_path} (size: {model_size / (1024*1024):.2f} MB)")
 
         try:
@@ -71,7 +71,7 @@ class ImageClassificationService:
                 logger.error(f"Model file size: {model_size} bytes")
                 logger.error(f"Model file readable: {os.access(model_path, os.R_OK)}")
                 raise IOError(f"Failed to load Keras model from {model_path}: {load_error}")
-            
+
             tf.get_logger().setLevel(logging.INFO)
             self.target_size = self.model.input_shape[1:3]
             logger.info(f"Model loaded successfully. Input shape: {self.model.input_shape}")
