@@ -1,64 +1,71 @@
-
-# Builder Stage
+# BUILDER STAGE
 FROM python:3.12-slim AS builder
 WORKDIR /app
 
+# Install build deps + Git + Git LFS
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc g++ curl ca-certificates \
+    build-essential gcc g++ curl ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-# Install torch (CPU)
-RUN pip install --no-cache-dir \
-    torch==2.4.1 --index-url https://download.pytorch.org/whl/cpu
+# Install Git LFS
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
+    && apt-get install -y git-lfs \
+    && git lfs install
 
-# Install requirements
+# Install Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download embedding model
-RUN mkdir -p models/embeddings && \
-    curl -L -o models/embeddings/pytorch_model.bin https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/pytorch_model.bin && \
-    curl -L -o models/embeddings/config.json https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/config.json && \
-    curl -L -o models/embeddings/tokenizer.json https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/tokenizer.json && \
-    curl -L -o models/embeddings/vocab.txt https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/vocab.txt && \
-    curl -L -o models/embeddings/special_tokens_map.json https://huggingface.co/sentence-transformers/paraphrase-MiniLM-L3-v2/resolve/main/special_tokens_map.json
-
-# Runtime Stage
+# RUNTIME STAGE
 FROM python:3.12-slim
 WORKDIR /app
 
+# Install runtime deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgomp1 libjpeg62-turbo zlib1g curl ca-certificates \
+    libgomp1 libjpeg62-turbo zlib1g curl ca-certificates git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy libraries and embeddings
+# Install Git LFS in runtime
+RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
+    && apt-get install -y git-lfs \
+    && git lfs install
+
+# Copy Python packages
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
-COPY --from=builder /app/models/embeddings models/embeddings
 
-# Copy only required folders explicitly to avoid overwriting
+# Copy source code
 COPY src/ src/
 COPY static/ static/
 COPY templates/ templates/
 COPY requirements.txt .
-COPY src/main.py src/main.py
 COPY data/vector_store/ data/vector_store/
 COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
-COPY models/resnet_model.h5 models/resnet_model.h5
 COPY models/class_labels.txt models/class_labels.txt
 
+# COPY LFS-TRACKED MODEL (POINTER ONLY)
+COPY models/resnet_model.h5 models/resnet_model.h5
+
+# PULL THE REAL 225MB MODEL VIA LFS
+RUN git lfs pull --include="models/resnet_model.h5"
+
+# Verify file is real
+RUN echo "=== Verifying resnet_model.h5 ===" && \
+    ls -lh models/resnet_model.h5 && \
+    file models/resnet_model.h5 | grep -i "Hierarchical Data Format"
+
+# Environment
 ENV PATH=/usr/local/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     TF_CPP_MIN_LOG_LEVEL=2 \
     FAISS_PATH=/app/data/vector_store/faiss_index \
     PYTHONPATH=/app
 
+# Create user
 RUN useradd -m -s /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
-
-RUN echo "=== Verifying model files ===" && ls -lh models/ && file models/resnet_model.h5 || true
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
