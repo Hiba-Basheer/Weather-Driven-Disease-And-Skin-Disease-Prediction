@@ -252,3 +252,4 @@ if __name__ == "__main__":
     print(f"Top-3 Accuracy : {correct_top3}/{total} ({acc_top3:.1f}%)")
     print(f"Avg Inference  : {avg_time:.3f}s")
     print("=" * 80)
+    
