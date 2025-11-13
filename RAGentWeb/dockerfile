@@ -51,7 +51,7 @@ COPY models/class_labels.txt models/class_labels.txt
 # Copy the large H5 model file with proper ownership
 COPY models/resnet_model.h5 models/resnet_model.h5
 
-# Verify model file was copied correctly (as root before chown)
+# Verify model file was copied correctly
 RUN test -f models/resnet_model.h5 && \
     test -s models/resnet_model.h5 && \
     echo "Model file exists and is not empty" || \

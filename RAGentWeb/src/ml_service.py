@@ -1,6 +1,6 @@
 """
 ml_service.py
-Machine Learning–based disease prediction using structured input + live weather.
+Machine Learning-based disease prediction using structured input + live weather.
 
 This module defines the MLService class, which loads a trained scikit-learn model
 to predict diseases from structured user inputs (age, gender, city, symptoms),

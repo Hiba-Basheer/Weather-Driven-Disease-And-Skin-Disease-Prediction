@@ -1,6 +1,6 @@
 """
 image_service.py
-Image Classification Service using a pre-trained CNN model (e.g., ResNet50).
+Image Classification Service using a pre-trained CNN model (ResNet50).
 
 This module provides an 'ImageClassificationService' class that loads a trained
 Keras image classification model and corresponding label file to predict disease
@@ -33,7 +33,7 @@ class ImageClassificationService:
         Initialize the image classification service.
 
         Args:
-            model_path (str): Path to the trained Keras model (.h5 or .keras).
+            model_path (str): Path to the trained Keras model (.h5).
             labels_path (str): Path to the class labels text file.
 
         Raises:
