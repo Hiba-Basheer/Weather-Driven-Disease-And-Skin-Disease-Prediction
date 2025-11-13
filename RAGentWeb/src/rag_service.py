@@ -53,9 +53,12 @@ class RAGService:
             self.retriever = self.vectorstore.as_retriever(search_kwargs={"k": 3})
 
             # LLM setup (Groq)
-            groq_api_key = os.getenv("GROQ_API_KEY") or "dummy"
+            groq_api_key = os.getenv("GROQ_API_KEY")
             if not groq_api_key:
-                raise ValueError("GROQ_API_KEY not set in environment variables.")
+                raise ValueError("GROQ_API_KEY not set in environment variables or is empty.")
+
+            redacted_key = f"{groq_api_key[:4]}...{groq_api_key[-4:]}" if len(groq_api_key) > 8 else "[redacted]"
+            logger.info("GROQ API key detected (length=%s, preview=%s)", len(groq_api_key), redacted_key)
 
             self.llm = ChatGroq(
                 groq_api_key=groq_api_key,
@@ -99,7 +102,7 @@ class RAGService:
             }
 
         except Exception as e:
-            logger.error(f"RAG chat error: {e}")
+            logger.exception("RAG chat error")
             return {"answer": "Error processing query.", "sources": str(e)}
 
 
