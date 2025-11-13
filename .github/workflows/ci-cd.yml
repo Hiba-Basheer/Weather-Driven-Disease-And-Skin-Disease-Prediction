@@ -71,7 +71,8 @@ jobs:
           LATEST_IMAGE="asia-south1-docker.pkg.dev/$PROJECT_ID/$REPO/$IMAGE_NAME:latest"
 
           echo "Building Docker image..."
-          docker build -t "$IMAGE" -f Dockerfile .
+          docker build --no-cache -t "$IMAGE" -f Dockerfile .
+
 
           echo "Pushing image with SHA tag..."
           docker push "$IMAGE"
