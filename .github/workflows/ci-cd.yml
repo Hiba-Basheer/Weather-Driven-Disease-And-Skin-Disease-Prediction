@@ -16,6 +16,14 @@ jobs:
         working-directory: ./RAGentWeb
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Git LFS pull
+        run: |
+          git lfs install --local
+          git lfs pull
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -42,6 +50,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Git LFS pull
+        run: |
+          git lfs install --local
+          git lfs pull
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
