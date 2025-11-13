@@ -101,10 +101,31 @@ async def lifespan(app: FastAPI):
     try:
         model_path = str(BASE_DIR / "models" / "resnet_model.h5")
         labels_path = str(BASE_DIR / "models" / "class_labels.txt")
+        
+        # Log paths for debugging
+        logger.info(f"Attempting to load Image Service from:")
+        logger.info(f"  Model path: {model_path}")
+        logger.info(f"  Labels path: {labels_path}")
+        logger.info(f"  BASE_DIR: {BASE_DIR}")
+        logger.info(f"  Model exists: {os.path.exists(model_path)}")
+        logger.info(f"  Labels exist: {os.path.exists(labels_path)}")
+        
+        if os.path.exists(model_path):
+            model_size = os.path.getsize(model_path)
+            logger.info(f"  Model file size: {model_size / (1024*1024):.2f} MB")
+        
         image_service = ImageClassificationService(model_path, labels_path)
         logger.info("Image Classification Service initialized successfully.")
+    except FileNotFoundError as e:
+        logger.error(f"Image Service file not found: {e}")
+        logger.error("Please ensure resnet_model.h5 and class_labels.txt are in the models/ directory.")
+    except IOError as e:
+        logger.error(f"Image Service IO error: {e}")
+        logger.error("This may indicate a corrupted model file or permission issue.")
     except Exception as e:
         logger.error(f"Error initializing Image Service: {e}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
 
     # RAG Service
     try:

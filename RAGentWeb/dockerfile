@@ -35,20 +35,35 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /app/models/embeddings models/embeddings
 
+# Create user first
+RUN useradd -m -s /bin/bash appuser
+
 # Copy application files
 COPY src/ src/
 COPY static/ static/
 COPY templates/ templates/
 COPY requirements.txt .
-COPY src/main.py src/main.py
 COPY data/vector_store/ data/vector_store/
 COPY models/ml/ models/ml/
 COPY models/dl/ models/dl/
 COPY models/class_labels.txt models/class_labels.txt
 
-# Force binary copy of the large H5 file 
-COPY --chown=appuser:appuser models/resnet_model.h5 models/resnet_model.h5
-RUN test -s models/resnet_model.h5 || (echo "resnet_model.h5 not copied!" && exit 1)
+# Copy the large H5 model file with proper ownership
+COPY models/resnet_model.h5 models/resnet_model.h5
+
+# Verify model file was copied correctly (as root before chown)
+RUN test -f models/resnet_model.h5 && \
+    test -s models/resnet_model.h5 && \
+    echo "Model file exists and is not empty" || \
+    (echo "ERROR: resnet_model.h5 not copied or is empty!" && exit 1)
+
+# Verify class_labels.txt exists
+RUN test -f models/class_labels.txt && \
+    echo "Labels file exists" || \
+    (echo "ERROR: class_labels.txt not found!" && exit 1)
+
+# Change ownership of all files to appuser
+RUN chown -R appuser:appuser /app
 
 # Environment variables
 ENV PATH=/usr/local/bin:$PATH \
@@ -57,12 +72,15 @@ ENV PATH=/usr/local/bin:$PATH \
     FAISS_PATH=/app/data/vector_store/faiss_index \
     PYTHONPATH=/app
 
-RUN useradd -m -s /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
 
-# Verify model before starting
-RUN echo "Verifying model files" && ls -lh models/ && du -h models/resnet_model.h5 || true
+# Final verification as appuser
+RUN ls -lh models/ && \
+    test -r models/resnet_model.h5 && \
+    test -r models/class_labels.txt && \
+    echo "Model files verified and readable" || \
+    (echo "WARNING: Model files may not be readable" && true)
 
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]

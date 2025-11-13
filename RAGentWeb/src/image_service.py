@@ -40,6 +40,7 @@ class ImageClassificationService:
             FileNotFoundError: If the model or labels file cannot be found.
             IOError: If the Keras model fails to load.
         """
+        # Check if files exist
         if not os.path.exists(model_path):
             raise FileNotFoundError(
                 f"Image classification model not found at: {model_path}"
@@ -47,11 +48,36 @@ class ImageClassificationService:
         if not os.path.exists(labels_path):
             raise FileNotFoundError(f"Class labels file not found at: {labels_path}")
 
+        # Check file permissions and size
+        if not os.access(model_path, os.R_OK):
+            raise IOError(f"Model file is not readable: {model_path}")
+        
+        model_size = os.path.getsize(model_path)
+        if model_size == 0:
+            raise IOError(f"Model file is empty: {model_path}")
+        
+        logger.info(f"Loading model from {model_path} (size: {model_size / (1024*1024):.2f} MB)")
+
         try:
             tf.get_logger().setLevel(logging.ERROR)
-            self.model = tf.keras.models.load_model(model_path)
+            # Try loading with different methods for better error messages
+            try:
+                self.model = tf.keras.models.load_model(model_path)
+            except Exception as load_error:
+                # Provide more detailed error information
+                logger.error(f"Failed to load model: {load_error}")
+                logger.error(f"Model path: {model_path}")
+                logger.error(f"Model file exists: {os.path.exists(model_path)}")
+                logger.error(f"Model file size: {model_size} bytes")
+                logger.error(f"Model file readable: {os.access(model_path, os.R_OK)}")
+                raise IOError(f"Failed to load Keras model from {model_path}: {load_error}")
+            
             tf.get_logger().setLevel(logging.INFO)
             self.target_size = self.model.input_shape[1:3]
+            logger.info(f"Model loaded successfully. Input shape: {self.model.input_shape}")
+        except IOError:
+            # Re-raise IOError as-is
+            raise
         except Exception as e:
             raise IOError(f"Failed to load Keras model: {e}")
 

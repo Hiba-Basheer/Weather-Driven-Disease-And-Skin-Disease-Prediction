@@ -6,6 +6,7 @@ python-multipart==0.0.20
 # ML/DL
 tensorflow-cpu==2.16.2
 tf-keras==2.16.0
+h5py==3.11.0
 scikit-learn==1.7.1
 numpy==1.26.4
 pandas==2.3.3
