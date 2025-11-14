@@ -133,13 +133,24 @@ class MLService:
                 if symptom in features_dict:
                     features_dict[symptom] = 1
 
-            # Encode gender if part of expected features
+            # Encode gender - use "Gender" (capitalized) to match training preprocessing
             gender = user_input.get("gender", "").lower()
-            if "gender" in self.expected_features:
+            if "Gender" in self.expected_features:
+                features_dict["Gender"] = 1 if gender == "male" else 0
+            elif "gender" in self.expected_features:
+                # Fallback for lowercase if model was trained with lowercase
                 features_dict["gender"] = 1 if gender == "male" else 0
+
+            # Removed lag features - not applicable for single prediction
+            # We use current weather data from API, not historical time series
+            # If your model still expects lag features, you'll need to retrain without them first
 
             # Create DataFrame for model input
             df_final = pd.DataFrame([features_dict])
+
+            # Ensure columns match exactly what the model expects
+            # Reorder columns to match expected_features order
+            df_final = df_final[self.expected_features]
 
             # Predict probabilities and most likely class
             X_input = df_final.values
