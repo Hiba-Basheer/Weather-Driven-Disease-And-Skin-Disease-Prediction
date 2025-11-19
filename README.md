@@ -1,5 +1,5 @@
 ﻿# Weather-Driven Disease and Skin Disease Prediction
- ### A Multimodel AI Platform for Proactive Health Risk Assessment
+ ## A Multimodel AI Platform for Proactive Health Risk Assessment
 
 ## Overview
 This project delivers an integrated AI-powered health prediction system capable of identifying both weather-driven diseases and skin-related conditions using a combination of:
@@ -241,6 +241,7 @@ Incorporate larger, clinically verified datasets
 Integrate real-time logging into Tableau dashboard
 Integrate real-time weather APIs
 Expand RAG knowledge base
+
 
 
 
