@@ -1,5 +1,5 @@
 ﻿# Weather-Driven Disease and Skin Disease Prediction
- ## A Multimodel AI Platform for Proactive Health Risk Assessment
+ ### A Multimodel AI Platform for Proactive Health Risk Assessment
 
 ## Overview
 This project delivers an integrated AI-powered health prediction system capable of identifying both weather-driven diseases and skin-related conditions using a combination of:
@@ -105,7 +105,7 @@ Supports real-time weather via OpenWeatherMap API
 
 Handles class imbalance via class weights
 
-### 3. Deep Learning Module — Image-Based Skin Disease Detection (ResNet50)
+### 3. Deep Learning Module (Image-Based Skin Disease Detection)
 This module implements image-based skin disease prediction using a Deep Learning model (ResNet50).
 
 ✔ Purpose
@@ -205,7 +205,7 @@ Image classifier
 RAG chatbot
 
 ---
-###  End-to-End System Flow
+##  End-to-End System Flow
 
 User enters symptoms, image, or query
 
@@ -220,7 +220,7 @@ UI displays results
 Tableau dashboard provides historical context
 
 ---
-### Project Conclusion
+## Project Conclusion
 
 This work delivers a multimodal medical AI platform capable of handling:
 
@@ -234,14 +234,14 @@ Skin disease images
 
 Informational medical queries
 
-The system demonstrates high accuracy, robust fusion capabilities, and real-world deployability.
 ---
-### Future Improvements
+## Future Improvements
 
 Incorporate larger, clinically verified datasets
 Integrate real-time logging into Tableau dashboard
 Integrate real-time weather APIs
 Expand RAG knowledge base
+
 
 
 
