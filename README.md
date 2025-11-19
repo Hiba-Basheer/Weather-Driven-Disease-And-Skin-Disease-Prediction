@@ -46,6 +46,7 @@ week27/
 ## Modules Description
 
 ### 1. Machine Learning Module (Weather-Driven Disease Prediction)
+
 ✔ Purpose
 
 Predict diseases using structured data: symptoms, age, gender, and weather (temperature, humidity, wind speed).
@@ -68,25 +69,179 @@ Tracked with MLflow (runs, metrics, parameters)
 
 Limited availability of perfectly aligned symptom–weather datasets
 
-### 2. DL (Deep Learning)
-Deep learning pipelines for disease prediction.
-Includes MLflow for experiment tracking.
+### 2. Multimodal Deep Learning (Text + Tabular Fusion)
 
-### 3. ML (Machine Learning)
-Classic machine learning pipelines and research experiments on disease prediction. Includes Jupyter notebooks for experimentation.
+✔ Purpose
 
-### 4. RAG_chatbot
-Retrieval-based chatbot module to provide users with disease and weather-related guidance.
+Fuse free-text symptom descriptions with structured weather and demographic data for richer, context-aware predictions.
 
-### 5. RAGentWeb
-Web interface for accessing predictions, chatbot, and visual dashboards.
+✔ Dual-Branch Architecture
+
+Branch A – Text
+
+Keras TextVectorization
+
+Embedding layer
+
+BiLSTM encoder
+
+Branch B – Tabular
+
+StandardScaler for continuous features
+
+Raw symptom indicators + gender
+
+Dense layers + Dropout
+
+Fusion Layer
+
+Concatenation → Dense → Dropout → Softmax classifier
+
+✔ Additional Highlights
+
+Synthetic text dataset generated from structured symptoms
+
+Supports real-time weather via OpenWeatherMap API
+
+Handles class imbalance via class weights
+
+### 3. Deep Learning Module — Image-Based Skin Disease Detection (ResNet50)
+This module implements image-based skin disease prediction using a Deep Learning model (ResNet50).
+
+✔ Purpose
+
+Detect and classify skin conditions from input images using Deep Learning.
+
+✔ Approach
+
+Uses ResNet50 pretrained on ImageNet
+
+Adds custom dense layers for skin disease classification
+
+Employs a two-phase training strategy:
+
+Train only new dense layers while freezing ResNet50
+
+Fine-tune the top layers of ResNet50 with a low LR
+
+Handles class imbalance using class weights
+
+✔ Performance
+
+Accuracy: 96.99%
+
+Macro F1-score: 95.78%
+
+Reliable across 6 classes despite dataset imbalance
+
+### 4. RAG-Based Chatbot
+
+✔ Purpose
+
+Provide informative, contextual disease explanations after a prediction.
+
+✔ Stack
+
+FAISS vector store
+
+HuggingFace embeddings
+
+Groq LLM 
+
+LangChain Conversational Retrieval Chain
+
+✔ Flow
+
+User query →
+
+FAISS retrieves relevant documents →
+
+Groq LLM generates grounded response
+
+✔ Strength
+
+Delivers reliable, explanation-focused outputs with minimized hallucination.
+
+### 5. Tableau Health Monitoring Dashboard
+
+✔ Purpose
+
+Visualize historical weather–disease patterns.
+
+✔ Features
+
+Disease frequency charts
+
+Weather correlation analysis
+
+Symptom co-occurrence exploration
+
+Dynamic filters
+
+✔ Data Source
+
+Historical weather-driven disease dataset
+
+### 6. FastAPI Web Application
+
+✔ Purpose
+
+Provide a unified interface for all four AI services.
+
+✔ Architecture
+
+Backend: FastAPI
+
+Frontend: HTML5 + Bootstrap + Custom CSS
+
+Services Loaded at Startup:
+
+ML predictor
+
+DL multimodal model
+
+Image classifier
+
+RAG chatbot
 
 ---
+###  End-to-End System Flow
 
+User enters symptoms, image, or query
 
+FastAPI routes request to correct module
+
+Model generates prediction
+
+RAG chatbot gives medical-style explanation
+
+UI displays results
+
+Tableau dashboard provides historical context
+
+---
+### Project Conclusion
+
+This work delivers a multimodal medical AI platform capable of handling:
+
+Numerical health data
+
+Free-text descriptions
+
+Environmental weather attributes
+
+Skin disease images
+
+Informational medical queries
+
+The system demonstrates high accuracy, robust fusion capabilities, and real-world deployability.
+---
 ### Future Improvements
- 
+
+Incorporate larger, clinically verified datasets
+Integrate real-time logging into Tableau dashboard
 Integrate real-time weather APIs
 Expand RAG knowledge base
+
 
 
