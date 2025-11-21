@@ -27,6 +27,7 @@ from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, recall_score
+from sklearn.utils.class_weight import compute_sample_weight
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -37,7 +38,13 @@ current_dir = Path(__file__).resolve().parent
 src_path = current_dir.parent / "src"
 sys.path.append(str(src_path))
 
-from utils.preprocess import load_data, preprocess_data, get_features  
+from utils.preprocess import (
+    load_data, 
+    preprocess_data, 
+    get_features,
+    check_class_distribution,
+    compute_class_weights
+)  
 
 def train_model() -> None:
     """Train and evaluate ML models, log metrics, and save artifacts."""
@@ -62,6 +69,13 @@ def train_model() -> None:
         X = X.loc[:, ~X.columns.duplicated()]
         logger.info(f"Final feature count after deduplication: {X.shape[1]}")
 
+        # Check class distribution for imbalance
+        logger.info("Analyzing class distribution...")
+        class_counts = check_class_distribution(y)
+
+        # Compute class weights for handling imbalance
+        class_weights = compute_class_weights(y)
+
         # Save processed dataset
         processed_dir.mkdir(parents=True, exist_ok=True)
         data.to_csv(processed_data_path, index=False)
@@ -73,14 +87,19 @@ def train_model() -> None:
         logger.info(f"Expected feature columns saved to: {feature_columns_path}")
 
         # Train/test split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+        logger.info(f"Train set shape: {X_train.shape}, Test set shape: {X_test.shape}")
 
         # Start MLflow experiment
         mlflow.set_experiment("ML MODULE")
         with mlflow.start_run(run_name="Model_Comparison"):
-            # Train Random Forest
-            logger.info("Training Random Forest...")
-            rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+            # Train Random Forest with class weights
+            logger.info("Training Random Forest with class weights...")
+            rf_model = RandomForestClassifier(
+                n_estimators=100, 
+                class_weight=class_weights,
+                random_state=42
+            )
             rf_model.fit(X_train, y_train)
             rf_pred = rf_model.predict(X_test)
             rf_acc = accuracy_score(y_test, rf_pred)
@@ -89,10 +108,13 @@ def train_model() -> None:
             mlflow.log_metric("rf_recall", rf_recall)
             mlflow.sklearn.log_model(rf_model, artifact_path="random_forest")
 
-            # Train XGBoost
-            logger.info("Training XGBoost...")
+            # Train XGBoost with class weights
+            # XGBoost uses sample_weight parameter during fit instead of class_weight
+            logger.info("Training XGBoost with class weights...")
+            sample_weights_train = compute_sample_weight(class_weight=class_weights, y=y_train)
+            
             xgb_model = XGBClassifier(eval_metric="mlogloss", random_state=42)
-            xgb_model.fit(X_train, y_train)
+            xgb_model.fit(X_train, y_train, sample_weight=sample_weights_train)
             xgb_pred = xgb_model.predict(X_test)
             xgb_acc = accuracy_score(y_test, xgb_pred)
             xgb_recall = recall_score(y_test, xgb_pred, average="macro")
@@ -108,6 +130,12 @@ def train_model() -> None:
             # Log model metadata
             mlflow.log_param("best_model", best_model_name)
             mlflow.log_param("feature_count", X.shape[1])
+            mlflow.log_param("class_weights_applied", True)
+            
+            # Log class distribution info
+            mlflow.log_param("num_classes", len(class_counts))
+            for cls, count in class_counts.items():
+                mlflow.log_metric(f"class_{cls}_count", count)
 
             # Save model and encoder
             joblib.dump(best_model, model_path)

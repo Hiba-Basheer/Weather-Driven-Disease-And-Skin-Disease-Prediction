@@ -92,12 +92,6 @@ def predict_disease(user_input: dict, model_path, le_path, symptom_columns, show
         input_data[col] = [val]
 
     input_df = pd.DataFrame(input_data)
-    
-    # Creating lag features
-    input_df['Temperature_lag1'] = input_df['Temperature (C)'].shift(1).fillna(input_df['Temperature (C)'].mean())
-    input_df['Humidity_lag1'] = input_df['Humidity'].shift(1).fillna(input_df['Humidity'].mean())
-    input_df['WindSpeed_lag1'] = input_df['Wind Speed (km/h)'].shift(1).fillna(input_df['Wind Speed (km/h)'].mean())
-
     model_features = model.feature_names_in_
     input_df = input_df[model_features]
     logger.info("Input data prepared for prediction.")
