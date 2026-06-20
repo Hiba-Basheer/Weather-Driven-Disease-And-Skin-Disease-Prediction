@@ -114,7 +114,7 @@ async def lifespan(app: FastAPI):
             model_size = os.path.getsize(model_path)
             logger.info(f"  Model file size: {model_size / (1024*1024):.2f} MB")
 
-        image_service = ImageClassificationService(model_path, labels_path)
+        app.state.image_service = ImageClassificationService(model_path, labels_path)
         logger.info("Image Classification Service initialized successfully.")
     except FileNotFoundError as e:
         logger.error(f"Image Service file not found: {e}")
@@ -211,11 +211,12 @@ async def predict_dl_endpoint(payload: DLPredictionRequest):
 @app.post("/api/classify_image")
 async def classify_image_endpoint(file: UploadFile = File(...)):
     """Classifies an uploaded image using the CNN-based skin disease model."""
-    if not image_service:
+    service = app.state.image_service
+    if not service:
         raise HTTPException(status_code=503, detail="Image Classification Service not available.")
     try:
         image_bytes = await file.read()
-        result = image_service.classify(image_bytes)
+        result = service.classify(image_bytes)
         return result
     except Exception as e:
         logger.error(f"Image Classification Error: {e}")
