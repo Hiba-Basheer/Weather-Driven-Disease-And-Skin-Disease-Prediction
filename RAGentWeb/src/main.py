@@ -45,7 +45,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Global service instances
 ml_service: MLService | None = None
 dl_service: DLService | None = None
-image_service: ImageClassificationService | None = None
 rag_service: RAGService | None = None
 
 
@@ -71,7 +70,7 @@ class RAGQueryRequest(BaseModel):
 # Lifespan: actual model loading
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global ml_service, dl_service, image_service, rag_service
+    global ml_service, dl_service, rag_service
 
     if dl_service is not None:
         logger.info("Services already initialized. Skipping reinitialization.")
@@ -156,12 +155,6 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-# INSTANT HEALTH ENDPOINT
-@app.get("/health")
-async def instant_health_check():
-    return {"status": "healthy"}
-
-
 # Legacy startup event
 @app.on_event("startup")
 async def startup_event() -> None:
@@ -211,9 +204,12 @@ async def predict_dl_endpoint(payload: DLPredictionRequest):
 @app.post("/api/classify_image")
 async def classify_image_endpoint(file: UploadFile = File(...)):
     """Classifies an uploaded image using the CNN-based skin disease model."""
-    service = app.state.image_service
-    if not service:
-        raise HTTPException(status_code=503, detail="Image Classification Service not available.")
+    service = getattr(app.state, "image_service", None)
+    if service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Image Classification Service not available."
+        )
     try:
         image_bytes = await file.read()
         result = service.classify(image_bytes)
@@ -247,7 +243,7 @@ async def health_check():
         "services": {
             "ml": ml_service is not None,
             "dl": dl_service is not None,
-            "image": image_service is not None,
+            "image": getattr(app.state, "image_service", None) is not None,
             "rag": rag_service is not None,
         },
         "message": "RAGentWeb API is running and all services are loaded.",
