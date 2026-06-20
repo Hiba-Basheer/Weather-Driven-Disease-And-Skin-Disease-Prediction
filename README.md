@@ -1,248 +1,351 @@
-﻿# Weather-Driven Disease and Skin Disease Prediction
- ## A Multimodel AI Platform for Proactive Health Risk Assessment
+# 🌦️ Weather-Driven Disease and Skin Disease Prediction
+
+## A Multimodal AI Platform for Proactive Health Risk Assessment
+
+---
 
 ## Overview
-This project delivers an integrated AI-powered health prediction system capable of identifying both weather-driven diseases and skin-related conditions using a combination of:
-Machine Learning (ML) – Tabular disease prediction
 
-Multimodal Deep Learning (DL) – Text + weather + symptom fusion
+Weather-Driven Disease and Skin Disease Prediction is an end-to-end AI platform that combines Machine Learning, Deep Learning, Computer Vision, Retrieval-Augmented Generation (RAG), and FastAPI to provide intelligent health risk assessment.
 
-Deep Learning – Image-based skin disease detection
+The platform predicts diseases from structured health information, free-text symptom descriptions, environmental weather conditions, and skin images. It also includes an AI-powered chatbot that provides contextual explanations based on retrieved medical knowledge instead of relying solely on a language model's internal knowledge.
 
-RAG Chatbot – Retrieval-augmented guidance
-
-Web Dashboard – Historical disease analytics using Tableau
-
-FastAPI Web App – Unified system deployment
-
-The platform processes structured health data, free-text symptom descriptions, environmental weather conditions, and medical images to perform robust and scalable predictions.
+The project demonstrates the complete AI application lifecycle—from data preprocessing and model training to deployment, API integration, and user interaction.
 
 ---
 
-## Project Structure
+# 🚀 Project Highlights
 
+* End-to-end AI healthcare platform
+* Machine Learning disease prediction
+* Multimodal Deep Learning (Text + Weather + Symptoms)
+* Image-based skin disease detection using ResNet50
+* Retrieval-Augmented Generation (RAG) chatbot
+* FastAPI backend serving multiple AI models
+* Dockerized deployment
+* MLflow experiment tracking
+* Tableau analytics dashboard
+* Modular and scalable architecture
+
+---
+
+# 💡 Why This Project?
+
+Most healthcare prediction systems focus on only one type of input, such as structured patient records or medical images.
+
+This project explores a multimodal approach by combining:
+
+* Structured patient information
+* Weather conditions
+* Free-text symptom descriptions
+* Skin disease images
+* Context-aware medical explanations using Retrieval-Augmented Generation (RAG)
+
+Instead of fine-tuning a Large Language Model, I chose a Retrieval-Augmented Generation (RAG) architecture. This allows the chatbot to retrieve relevant medical information during inference, making it easier to update the knowledge base without retraining the model while producing more grounded and reliable responses.
+
+---
+
+# 🛠 Tech Stack
+
+### Programming
+
+* Python
+
+### Machine Learning
+
+* Scikit-learn
+* Random Forest
+* XGBoost
+
+### Deep Learning
+
+* TensorFlow
+* Keras
+* BiLSTM
+* ResNet50
+
+### LLM & RAG
+
+* LangChain
+* FAISS
+* HuggingFace Embeddings
+* Groq LLM
+
+### Backend
+
+* FastAPI
+
+### Deployment
+
+* Docker
+* Google Cloud Platform (GCP)
+
+### Visualization
+
+* Tableau
+
+### Experiment Tracking
+
+* MLflow
+
+---
+
+# 🏗 System Architecture
+
+```text
+                    User
+                      │
+                      ▼
+                  FastAPI API
+                      │
+      ┌───────────────┼────────────────┐
+      │               │                │
+      ▼               ▼                ▼
+ ML Prediction   DL Prediction   Skin Disease Detection
+      │               │                │
+      └───────────────┼────────────────┘
+                      ▼
+               RAG Chatbot
+                      │
+               LangChain + FAISS
+                      │
+                   Groq LLM
+                      │
+                      ▼
+              Health Guidance
 ```
+
+---
+
+# 📂 Project Structure
+
+```text
 week27/
-├── CV/ # Image classification module
-│ └── src/ # Preprocessing, training, prediction
-├── DL/ # Deep learning module
-│ ├── DL_module/
-│ │ └── dl_codes/ # Model training and prediction scripts
-│ ├── artifacts/ # Temporary model outputs (ignored by git)
-│ └── mlflow_artifacts/ # MLflow tracking outputs (ignored by git)
-├── ML/ # Machine learning module
-│ └── ML_module/ml_codes/
-├── RAG_chatbot/ # Retrieval-augmented chatbot logic
-│ └── src/
-├── RAGentWeb/ # Web app for model access and dashboard
-│ ├── data/ # Weather and skin datasets
-│ └── src/ # API backend and web services
+├── CV/
+│   └── src/
+├── DL/
+│   ├── DL_module/
+│   ├── artifacts/
+│   └── mlflow_artifacts/
+├── ML/
+│   └── ML_module/
+├── RAG_chatbot/
+│   └── src/
+├── RAGentWeb/
+│   ├── data/
+│   └── src/
 ├── .gitignore
 └── README.md
-
 ```
+
 ---
 
-## Modules Description
+# 📌 Modules
 
-### 1. Machine Learning Module (Weather-Driven Disease Prediction)
+## 1️⃣ Machine Learning Module
 
-✔ Purpose
+### Purpose
 
-Predict diseases using structured data: symptoms, age, gender, and weather (temperature, humidity, wind speed).
+Predict weather-driven diseases using structured patient information.
 
-✔ Key Features
+### Inputs
 
-Models trained: Random Forest and XGBoost
+* Symptoms
+* Age
+* Gender
+* Temperature
+* Humidity
+* Wind Speed
 
-Random Forest selected
+### Model
 
-Accuracy: 0.9856
+* Random Forest
+* XGBoost
 
-Recall: 0.9864
+Random Forest was selected as the final model.
 
-Serialized via .pkl for real-time prediction
+### Performance
 
-Tracked with MLflow (runs, metrics, parameters)
+* Accuracy: **98.56%**
+* Recall: **98.64%**
 
-✔ Key Challenges
+### Features
 
-Limited availability of perfectly aligned symptom–weather datasets
-
-### 2. Multimodal Deep Learning (Text + Tabular Fusion)
-
-✔ Purpose
-
-Fuse free-text symptom descriptions with structured weather and demographic data for richer, context-aware predictions.
-
-✔ Dual-Branch Architecture
-
-Branch A – Text
-
-Keras TextVectorization
-
-Embedding layer
-
-BiLSTM encoder
-
-Branch B – Tabular
-
-StandardScaler for continuous features
-
-Raw symptom indicators + gender
-
-Dense layers + Dropout
-
-Fusion Layer
-
-Concatenation → Dense → Dropout → Softmax classifier
-
-✔ Additional Highlights
-
-Synthetic text dataset generated from structured symptoms
-
-Supports real-time weather via OpenWeatherMap API
-
-Handles class imbalance via class weights
-
-### 3. Deep Learning Module (Image-Based Skin Disease Detection)
-This module implements image-based skin disease prediction using a Deep Learning model (ResNet50).
-
-✔ Purpose
-
-Detect and classify skin conditions from input images using Deep Learning.
-
-✔ Approach
-
-Uses ResNet50 pretrained on ImageNet
-
-Adds custom dense layers for skin disease classification
-
-Employs a two-phase training strategy:
-
-Train only new dense layers while freezing ResNet50
-
-Fine-tune the top layers of ResNet50 with a low LR
-
-Handles class imbalance using class weights
-
-✔ Performance
-
-Accuracy: 96.99%
-
-Macro F1-score: 95.78%
-
-Reliable across 6 classes despite dataset imbalance
-
-### 4. RAG-Based Chatbot
-
-✔ Purpose
-
-Provide informative, contextual disease explanations after a prediction.
-
-✔ Stack
-
-FAISS vector store
-
-HuggingFace embeddings
-
-Groq LLM 
-
-LangChain Conversational Retrieval Chain
-
-✔ Flow
-
-User query →
-
-FAISS retrieves relevant documents →
-
-Groq LLM generates grounded response
-
-✔ Strength
-
-Delivers reliable, explanation-focused outputs with minimized hallucination.
-
-### 5. Tableau Health Monitoring Dashboard
-
-✔ Purpose
-
-Visualize historical weather–disease patterns.
-
-✔ Features
-
-Disease frequency charts
-
-Weather correlation analysis
-
-Symptom co-occurrence exploration
-
-Dynamic filters
-
-✔ Data Source
-
-Historical weather-driven disease dataset
-
-### 6. FastAPI Web Application
-
-✔ Purpose
-
-Provide a unified interface for all four AI services.
-
-✔ Architecture
-
-Backend: FastAPI
-
-Frontend: HTML5 + Bootstrap + Custom CSS
-
-Services Loaded at Startup:
-
-ML predictor
-
-DL multimodal model
-
-Image classifier
-
-RAG chatbot
+* MLflow experiment tracking
+* Pickle model serialization
+* Real-time prediction
 
 ---
-##  End-to-End System Flow
 
-User enters symptoms, image, or query
+## 2️⃣ Multimodal Deep Learning Module
 
-FastAPI routes request to correct module
+### Purpose
 
-Model generates prediction
+Combine structured health information with natural language symptom descriptions.
 
-RAG chatbot gives medical-style explanation
+### Architecture
 
-UI displays results
+**Text Branch**
 
-Tableau dashboard provides historical context
+* TextVectorization
+* Embedding Layer
+* BiLSTM
+
+**Tabular Branch**
+
+* Weather features
+* Demographics
+* Symptom indicators
+* Dense Layers
+
+Both branches are fused into a shared classifier for prediction.
+
+### Features
+
+* Synthetic text generation
+* OpenWeatherMap integration
+* Class imbalance handling
 
 ---
-## Project Conclusion
 
-This work delivers a multimodal medical AI platform capable of handling:
+## 3️⃣ Skin Disease Detection
 
-Numerical health data
+### Purpose
 
-Free-text descriptions
+Detect skin diseases from uploaded images.
 
-Environmental weather attributes
+### Model
 
-Skin disease images
+* ResNet50 (ImageNet pretrained)
 
-Informational medical queries
+### Training Strategy
+
+* Freeze pretrained layers
+* Train custom classifier
+* Fine-tune upper ResNet layers
+
+### Performance
+
+* Accuracy: **96.99%**
+* Macro F1 Score: **95.78%**
 
 ---
-## Future Improvements
 
-Incorporate larger, clinically verified datasets
-Integrate real-time logging into Tableau dashboard
-Integrate real-time weather APIs
-Expand RAG knowledge base
+## 4️⃣ Retrieval-Augmented Generation (RAG)
 
+### Purpose
 
+Provide contextual explanations after predictions.
 
+### Pipeline
 
+User Query
 
+↓
+
+FAISS Retrieval
+
+↓
+
+Relevant Medical Documents
+
+↓
+
+Groq LLM
+
+↓
+
+Grounded Response
+
+### Technologies
+
+* LangChain
+* FAISS
+* HuggingFace Embeddings
+* Groq
+
+### Benefits
+
+* Reduces hallucinations
+* Easy knowledge base updates
+* Grounded responses
+
+---
+
+## 5️⃣ Tableau Dashboard
+
+Interactive dashboard for visualizing:
+
+* Disease frequency
+* Weather correlations
+* Symptom patterns
+* Historical trends
+
+---
+
+## 6️⃣ FastAPI Web Application
+
+Acts as the central API that integrates:
+
+* Machine Learning prediction
+* Multimodal Deep Learning
+* Skin Disease Detection
+* RAG Chatbot
+
+Provides a unified interface for all AI services.
+
+---
+
+# 🔄 End-to-End Workflow
+
+```text
+User Input
+     │
+     ▼
+FastAPI Backend
+     │
+     ├── ML Disease Prediction
+     ├── Multimodal DL Prediction
+     ├── Skin Disease Detection
+     └── RAG Chatbot
+               │
+               ▼
+Prediction + Contextual Explanation
+               │
+               ▼
+User Interface
+               │
+               ▼
+Tableau Dashboard
+```
+
+---
+
+# ⚙ Installation
+
+```bash
+git clone <repository-url>
+
+cd Weather-Driven-Disease-And-Skin-Disease-Prediction
+
+pip install -r requirements.txt
+
+uvicorn app:app --reload
+```
+
+---
+
+# 🚀 Future Roadmap
+
+* Integrate larger clinical datasets
+* Expand the RAG knowledge base
+* Improve explainability with SHAP
+* Authentication and user management
+
+---
+
+# 📖 Key Takeaways
+
+This project demonstrates the design and deployment of a complete AI application that combines traditional Machine Learning, Deep Learning, Computer Vision, Retrieval-Augmented Generation, and scalable backend development.
+
+Beyond model development, it focuses on system integration, experiment tracking, API design, deployment, and building production-oriented AI workflows.
