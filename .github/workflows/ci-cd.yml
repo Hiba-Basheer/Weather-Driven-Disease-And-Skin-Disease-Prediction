@@ -61,7 +61,8 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: projects/388983635036/locations/global/workloadIdentityPools/github-pool/providers/github-pool
+          service_account: github-deployer@climaderm.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -74,9 +75,9 @@ jobs:
 
       - name: Build, Push & Deploy
         env:
-          PROJECT_ID: arctic-robot-483906-t2   # <-- use your new project ID
+          PROJECT_ID: climaderm
           REGION: asia-south1
-          REPO: ragentweb-repo
+          REPO: weather-repo
           IMAGE_NAME: ragentweb
           IMAGE_SHA: ${{ github.sha }}
         run: |
