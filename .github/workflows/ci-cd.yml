@@ -46,6 +46,7 @@ jobs:
         working-directory: ./RAGentWeb
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
