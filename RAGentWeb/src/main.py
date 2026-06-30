@@ -77,22 +77,25 @@ async def lifespan(app: FastAPI):
         yield
         return
 
+    startup_start = time.time()
     logger.info("Application starting up — loading AI models and services...")
 
     # ML Service
     try:
+        start = time.time()
         ml_model_dir = BASE_DIR / "models" / "ml"
         if not ml_model_dir.exists():
             raise FileNotFoundError(f"ML model directory not found: {ml_model_dir}")
         ml_service = MLService(str(ml_model_dir), OPENWEATHER_API_KEY)
-        logger.info("ML Service initialized successfully.")
+        logger.info(f"ML Service initialized in {time.time() - start:.2f} seconds.")
     except Exception as e:
         logger.error(f"Error initializing ML Service: {e}")
 
     # DL Service
     try:
+        start = time.time()
         dl_service = DLService(OPENWEATHER_API_KEY)
-        logger.info("DL Service initialized successfully.")
+        logger.info(f"DL Service initialized in {time.time() - start:.2f} seconds.")
     except Exception as e:
         logger.error(f"Error initializing DL Service: {e}")
 
@@ -113,8 +116,9 @@ async def lifespan(app: FastAPI):
             model_size = os.path.getsize(model_path)
             logger.info(f"  Model file size: {model_size / (1024*1024):.2f} MB")
 
+        start = time.time()
         app.state.image_service = ImageClassificationService(model_path, labels_path)
-        logger.info("Image Classification Service initialized successfully.")
+        logger.info(f"Image Classification Service initialized in {time.time() - start:.2f} seconds.")
     except FileNotFoundError as e:
         logger.error(f"Image Service file not found: {e}")
         logger.error("Please ensure resnet_model.h5 and class_labels.txt are in the models/ directory.")
@@ -128,15 +132,16 @@ async def lifespan(app: FastAPI):
 
     # RAG Service
     try:
+        start = time.time()
         faiss_path = str(BASE_DIR / "data" / "vector_store" / "faiss_index")
         rag_service = RAGService(faiss_path)
-        logger.info(f"RAG Service initialized successfully from: {faiss_path}")
+        logger.info(f"RAG Service initialized in {time.time() - start:.2f} seconds")
     except Exception as e:
         logger.error(f"Error initializing RAG Service: {e}")
 
-    logger.info("All service initialization attempts complete.\n")
+    logger.info(f"Total startup time: {time.time() - startup_start:.2f} seconds")
+    logger.info("All service initialization attempts complete.")
 
-    time.sleep(5)
     logger.info("Startup delay complete — container ready for traffic.")
 
     yield
